@@ -8,23 +8,14 @@ import java.util.List;
 public class JsonTokenizer {
 
     final char STRING_DELIMITER = '"';
-
     final char LEFT_BRACE = '{';
-
     final char RIGHT_BRACE = '}';
-
     final char LEFT_BRACKET = '[';
-
     final char RIGHT_BRACKET = ']';
-
     final char COLON = ':';
-
     final char COMMA = ',';
-
     final char T = 't';
-
     final char F = 'f';
-
     final char N = 'n';
 
     private int cursor;
@@ -34,7 +25,7 @@ public class JsonTokenizer {
     }
 
     public List<JsonToken> tokenize(String stream) throws UnrecognizedTokenException {
-        List<JsonToken> tokens = new ArrayList<JsonToken>();
+        List<JsonToken> tokens = new ArrayList<>();
 
         int l = stream.length();
 

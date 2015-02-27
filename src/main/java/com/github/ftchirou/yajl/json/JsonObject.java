@@ -11,7 +11,7 @@ public class JsonObject extends JsonNode {
     private HashMap<String, JsonNode> fields;
 
     public JsonObject() {
-        this.fields = new LinkedHashMap<String, JsonNode>();
+        this.fields = new LinkedHashMap<>();
     }
 
     public JsonObject add(String key, String value) {
@@ -39,11 +39,19 @@ public class JsonObject extends JsonNode {
     }
 
     public JsonObject add(String key, BigInteger value) {
-        return add(key, new JsonBigInt(value));
+        if (value != null) {
+            return add(key, new JsonBigInt(value));
+        }
+
+        return add(key, new JsonNull());
     }
 
     public JsonObject add(String key, BigDecimal value) {
-        return add(key, new JsonDecimal(value));
+        if (value != null) {
+            return add(key, new JsonDecimal(value));
+        }
+
+        return add(key, new JsonNull());
     }
 
     public JsonObject add(String key, JsonNode value) {

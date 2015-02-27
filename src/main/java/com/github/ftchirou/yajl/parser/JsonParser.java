@@ -21,7 +21,6 @@ public class JsonParser {
 
     public JsonParser() {
         this.cursor = 0;
-        this.tokens = new ArrayList<JsonToken>();
     }
 
     public JsonNode parse(String jsonString) throws JsonParsingException {
@@ -98,7 +97,7 @@ public class JsonParser {
     }
 
     private HashMap<String, JsonNode> parseMembers() throws JsonParsingException {
-        LinkedHashMap<String, JsonNode> members = new LinkedHashMap<String, JsonNode>();
+        LinkedHashMap<String, JsonNode> members = new LinkedHashMap<>();
 
         JsonPair pair = parsePair();
 

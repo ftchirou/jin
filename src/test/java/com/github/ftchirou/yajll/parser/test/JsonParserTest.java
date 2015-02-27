@@ -3,7 +3,6 @@ package com.github.ftchirou.yajll.parser.test;
 import com.github.ftchirou.yajl.json.*;
 import com.github.ftchirou.yajl.parser.JsonParser;
 import com.github.ftchirou.yajl.parser.JsonParsingException;
-import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

@@ -11,7 +11,7 @@ public class JsonArray extends JsonNode implements Iterable<JsonNode> {
     private List<JsonNode> nodes;
 
     public JsonArray() {
-        this.nodes = new ArrayList<JsonNode>();
+        this.nodes = new ArrayList<>();
     }
 
     public void add(JsonNode node) {

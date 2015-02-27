@@ -13,17 +13,16 @@ public class FSM {
     private List<Integer> finalStates;
 
     public FSM(int states) {
-        this.transitions = new ArrayList<HashMap<Character, Integer>>(states);
+        this.transitions = new ArrayList<>(states);
         for (int i = 0; i < states; ++i) {
             this.transitions.add(new HashMap<Character, Integer>());
         }
 
-        finalStates = new ArrayList<Integer>();
+        finalStates = new ArrayList<>();
     }
 
     public void addTransition(int start, char symbol, int end) {
-        HashMap<Character, Integer> map = transitions.get(start);
-        map.put(symbol, end);
+        transitions.get(start).put(symbol, end);
     }
 
     public Output run(String stream) {
