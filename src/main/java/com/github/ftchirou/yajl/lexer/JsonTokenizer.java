@@ -179,13 +179,11 @@ public class JsonTokenizer {
         final int INT = 1;
         final int INT_FRAC = 2;
         final int INT_EXP = 3;
-
         final int START_FRAC = 4;
         final int START_EXP = 5;
-
         final int ZERO = 6;
 
-        FSM fsm = new FSM(8);
+        FSM fsm = new FSM(7);
         fsm.setInitialState(NUMBER);
         fsm.setFinalStates(ZERO, INT, INT_FRAC, INT_EXP);
 
