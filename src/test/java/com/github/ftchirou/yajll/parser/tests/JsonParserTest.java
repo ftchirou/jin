@@ -1,8 +1,9 @@
-package com.github.ftchirou.yajll.parser.test;
+package com.github.ftchirou.yajll.parser.tests;
 
 import com.github.ftchirou.yajl.json.*;
 import com.github.ftchirou.yajl.parser.JsonParser;
 import com.github.ftchirou.yajl.parser.JsonParsingException;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
