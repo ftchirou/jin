@@ -1,4 +1,4 @@
-package com.github.ftchirou.yajl.writer;
+package com.github.ftchirou.yajl.io;
 
 
 import com.github.ftchirou.yajl.json.JsonNode;

@@ -12,5 +12,5 @@ public enum TokenType {
     ARRAY_END,
     COMMA,
     COLON,
-    UNRECOGNIZED
+    END_OF_STREAM;
 }

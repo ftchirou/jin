@@ -4,7 +4,7 @@ import com.github.ftchirou.yajl.annotations.JsonGetter;
 import com.github.ftchirou.yajl.annotations.JsonIgnore;
 import com.github.ftchirou.yajl.annotations.JsonProperty;
 import com.github.ftchirou.yajl.annotations.JsonValue;
-import com.github.ftchirou.yajl.writer.JsonWriter;
+import com.github.ftchirou.yajl.io.JsonWriter;
 
 import java.io.IOException;
 import java.lang.reflect.Array;

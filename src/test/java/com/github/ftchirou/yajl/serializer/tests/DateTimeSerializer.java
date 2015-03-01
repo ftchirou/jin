@@ -1,7 +1,7 @@
 package com.github.ftchirou.yajl.serializer.tests;
 
 import com.github.ftchirou.yajl.serializer.JsonSerializer;
-import com.github.ftchirou.yajl.writer.JsonWriter;
+import com.github.ftchirou.yajl.io.JsonWriter;
 import org.joda.time.DateTime;
 
 import java.io.IOException;

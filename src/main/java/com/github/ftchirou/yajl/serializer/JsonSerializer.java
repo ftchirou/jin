@@ -1,6 +1,6 @@
 package com.github.ftchirou.yajl.serializer;
 
-import com.github.ftchirou.yajl.writer.JsonWriter;
+import com.github.ftchirou.yajl.io.JsonWriter;
 
 import java.io.IOException;
 

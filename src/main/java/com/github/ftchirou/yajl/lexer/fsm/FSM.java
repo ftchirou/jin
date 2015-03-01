@@ -1,5 +1,7 @@
 package com.github.ftchirou.yajl.lexer.fsm;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +46,31 @@ public class FSM {
             buffer += symbol;
 
             cursor++;
+        }
+
+        if (finalStates.contains(state)) {
+            return new Output(true, buffer);
+        }
+
+        return new Output(false, buffer);
+    }
+
+    public Output run(Reader reader) throws IOException {
+        String buffer = "";
+        int current;
+        int state = initialState;
+
+        while ((current = reader.read()) > 0) {
+            char symbol = (char) current;
+
+            HashMap<Character, Integer> map = transitions.get(state);
+            if (!map.containsKey(symbol)) {
+                break;
+            }
+
+            state = map.get(symbol);
+
+            buffer += symbol;
         }
 
         if (finalStates.contains(state)) {
