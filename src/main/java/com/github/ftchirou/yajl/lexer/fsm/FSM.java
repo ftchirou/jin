@@ -49,15 +49,15 @@ public class FSM {
         }
 
         if (finalStates.contains(state)) {
-            return new Output(true, buffer);
+            return new Output(true, buffer, -1);
         }
 
-        return new Output(false, buffer);
+        return new Output(false, buffer, -1);
     }
 
     public Output run(Reader reader) throws IOException {
         String buffer = "";
-        int current;
+        int current, lookahead = -1;
         int state = initialState;
 
         while ((current = reader.read()) > 0) {
@@ -65,6 +65,7 @@ public class FSM {
 
             HashMap<Character, Integer> map = transitions.get(state);
             if (!map.containsKey(symbol)) {
+                lookahead = current;
                 break;
             }
 
@@ -74,10 +75,10 @@ public class FSM {
         }
 
         if (finalStates.contains(state)) {
-            return new Output(true, buffer);
+            return new Output(true, buffer, lookahead);
         }
 
-        return new Output(false, buffer);
+        return new Output(false, buffer, lookahead);
     }
 
     public int getInitialState() {
@@ -103,6 +104,8 @@ public class FSM {
 
         private String value;
 
+        private int lookahead;
+
         public Output() {
 
         }
@@ -111,9 +114,10 @@ public class FSM {
             this.recognized = recognized;
         }
 
-        public Output(boolean recognized, String value) {
+        public Output(boolean recognized, String value, int lookahead) {
             this.recognized = recognized;
             this.value = value;
+            this.lookahead = lookahead;
         }
 
         public boolean isRecognized() {
@@ -130,6 +134,14 @@ public class FSM {
 
         public void setValue(String value) {
             this.value = value;
+        }
+
+        public int getLookahead() {
+            return lookahead;
+        }
+
+        public void setLookahead(int lookahead) {
+            this.lookahead = lookahead;
         }
     }
 }

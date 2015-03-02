@@ -23,10 +23,13 @@ public class JsonReader {
 
     private int cursor;
 
+    private int lookahead;
+
     private Reader reader;
 
     public JsonReader(InputStream in) {
         cursor = 0;
+        lookahead = -1;
 
         InputStreamReader isr = new InputStreamReader(in, Charset.forName("UTF-8"));
         reader = new BufferedReader(isr);
@@ -34,6 +37,7 @@ public class JsonReader {
 
     public JsonReader(String s) {
         cursor = 0;
+        lookahead = -1;
 
         reader = new StringReader(s);
     }
@@ -46,17 +50,28 @@ public class JsonReader {
         reader.close();
     }
 
-    public JsonToken nextToken() throws IOException, UnrecognizedTokenException {
-        int current;
-        char symbol = ' ';
-
-        while ((current = reader.read()) > 0 && !Character.isWhitespace((symbol = (char) current))) {
-            symbol = (char) reader.read();
+    private int read() throws IOException {
+        if (lookahead != -1) {
+            int c = lookahead;
+            lookahead = -1;
+            return c;
         }
 
-        if (current < 0) {
+        int c;
+
+        while ((c = reader.read()) > 0 && Character.isWhitespace((char) c));
+
+        return c;
+    }
+
+    public JsonToken nextToken() throws IOException, UnrecognizedTokenException {
+        int c = read();
+
+        if (c < 0) {
             return new JsonToken(TokenType.END_OF_STREAM);
         }
+
+        char symbol = (char) c;
 
         switch (symbol) {
             case LEFT_BRACE:
@@ -91,7 +106,7 @@ public class JsonReader {
 
             default:
                 if (Character.isDigit(symbol) || symbol == '-' || symbol == '0') {
-                    return recognizeNumberToken();
+                    return recognizeNumberToken(symbol);
                 }
                 break;
         }
@@ -130,7 +145,7 @@ public class JsonReader {
         return recognizeToken(TokenType.NULL, "null");
     }
 
-    private JsonToken recognizeNumberToken() throws IOException, UnrecognizedTokenException {
+    private JsonToken recognizeNumberToken(char firstDigit) throws IOException, UnrecognizedTokenException {
         int position = cursor;
 
         FSM recognizer = buildNumberRecognizer();
@@ -141,9 +156,13 @@ public class JsonReader {
             throw new UnrecognizedTokenException("unrecognized JSON token at position " + position);
         }
 
-        cursor += output.getValue().length();
+        String number = firstDigit + output.getValue();
 
-        return new JsonToken(TokenType.NUMBER, output.getValue(), position);
+        cursor += number.length();
+
+        lookahead = output.getLookahead();
+
+        return new JsonToken(TokenType.NUMBER, number, position);
     }
 
     private JsonToken recognizeToken(TokenType type, String repr) throws IOException, UnrecognizedTokenException {
@@ -151,8 +170,12 @@ public class JsonReader {
         int length = repr.length();
 
         FSM fsm = new FSM(length + 1);
-        fsm.setInitialState(0);
+        fsm.setInitialState(1);
         fsm.setFinalStates(length);
+
+        for (int i = 0; i <= length - 1; ++i) {
+            fsm.addTransition(i, repr.charAt(i), i + 1);
+        }
 
         FSM.Output output = fsm.run(reader);
 
@@ -160,9 +183,11 @@ public class JsonReader {
             throw new UnrecognizedTokenException("unrecognized JSON token at position " + position);
         }
 
-        cursor += output.getValue().length();
+        cursor += repr.length();
 
-        return new JsonToken(type, output.getValue(), position);
+        lookahead = output.getLookahead();
+
+        return new JsonToken(type, repr, position);
     }
 
     private FSM buildNumberRecognizer() {
