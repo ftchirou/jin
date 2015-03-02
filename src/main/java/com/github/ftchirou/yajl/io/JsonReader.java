@@ -50,20 +50,6 @@ public class JsonReader {
         reader.close();
     }
 
-    private int read() throws IOException {
-        if (lookahead != -1) {
-            int c = lookahead;
-            lookahead = -1;
-            return c;
-        }
-
-        int c;
-
-        while ((c = reader.read()) > 0 && Character.isWhitespace((char) c));
-
-        return c;
-    }
-
     public JsonToken nextToken() throws IOException, UnrecognizedTokenException {
         int c = read();
 
@@ -114,6 +100,20 @@ public class JsonReader {
         throw new UnrecognizedTokenException("invalid character " + symbol + " at position " + cursor);
     }
 
+    private int read() throws IOException {
+        if (lookahead != -1) {
+            int c = lookahead;
+            lookahead = -1;
+            return c;
+        }
+
+        int c;
+
+        while ((c = reader.read()) > 0 && Character.isWhitespace((char) c));
+
+        return c;
+    }
+
     private JsonToken recognizeStringToken() throws IOException, UnrecognizedTokenException {
         int position = cursor;
         int current;
@@ -148,7 +148,7 @@ public class JsonReader {
     private JsonToken recognizeNumberToken(char firstDigit) throws IOException, UnrecognizedTokenException {
         int position = cursor;
 
-        FSM recognizer = buildNumberRecognizer();
+        FSM recognizer = buildNumberRecognizer(firstDigit);
 
         FSM.Output output = recognizer.run(reader);
 
@@ -190,7 +190,7 @@ public class JsonReader {
         return new JsonToken(type, repr, position);
     }
 
-    private FSM buildNumberRecognizer() {
+    private FSM buildNumberRecognizer(char firstDigit) {
         final int NUMBER = 0;
         final int INT = 1;
         final int INT_FRAC = 2;
@@ -200,11 +200,21 @@ public class JsonReader {
         final int ZERO = 6;
 
         FSM fsm = new FSM(7);
-        fsm.setInitialState(NUMBER);
+
+        if (firstDigit == '0') {
+            fsm.setInitialState(ZERO);
+        } else {
+            fsm.setInitialState(INT);
+        }
+
         fsm.setFinalStates(ZERO, INT, INT_FRAC, INT_EXP);
 
         fsm.addTransition(NUMBER, '0', ZERO);
         fsm.addTransition(NUMBER, '-', INT);
+
+        fsm.addTransition(ZERO, '.', START_FRAC);
+        fsm.addTransition(START_FRAC, '0', INT_FRAC);
+        fsm.addTransition(START_EXP, '0', INT_EXP);
 
         String digits = "123456789";
         int digitsLength = digits.length();

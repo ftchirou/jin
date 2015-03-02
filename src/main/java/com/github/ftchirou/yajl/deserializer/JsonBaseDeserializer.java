@@ -5,8 +5,10 @@ import com.github.ftchirou.yajl.lexer.JsonToken;
 import com.github.ftchirou.yajl.lexer.TokenType;
 import com.github.ftchirou.yajl.lexer.UnrecognizedTokenException;
 import com.github.ftchirou.yajl.parser.JsonParsingException;
+import com.github.ftchirou.yajl.type.TypeReference;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -25,6 +27,39 @@ public class JsonBaseDeserializer {
         token = toNextToken(reader);
 
         return cls.cast(deserializeValue(reader, cls));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T deserialize(JsonReader reader, TypeReference reference) throws IOException, JsonParsingException {
+        token = toNextToken(reader);
+
+        try {
+            Class<?> cls = reference.getReferenceClass();
+
+            if (Collection.class.isAssignableFrom(cls)) {
+                Collection collection = (Collection) reference.newInstance();
+
+                deserializeCollection(collection, reader, Class.forName(reference.getType().toString().split("<|>")[1].trim()));
+
+                return (T) collection;
+            }
+
+            if (Map.class.isAssignableFrom(cls)) {
+                Map map = (Map) reference.newInstance();
+
+                String[] keyValueTypes = reference.getType().toString().split("<|>")[1].split(",");
+
+                deserializeMap(map, reader, Class.forName(keyValueTypes[0].trim()), Class.forName(keyValueTypes[1].trim()));
+
+                return (T) map;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+
+        return null;
     }
 
     private <T> T deserializeObject(JsonReader reader, Class<T> cls) throws IOException, JsonParsingException {
@@ -87,24 +122,20 @@ public class JsonBaseDeserializer {
         }
     }
 
-    private Object[] deserializeArray(JsonReader reader, Class<?> componentType) throws IOException, JsonParsingException {
-        expect(TokenType.ARRAY_START, reader);
-
+    private Object deserializeArray(JsonReader reader, Class<?> componentType) throws IOException, JsonParsingException {
         ArrayList<Object> list = new ArrayList<>();
 
-        while (!accept(TokenType.ARRAY_END)) {
-            list.add(deserializeValue(reader, componentType));
+        deserializeCollection(list, reader, componentType);
 
-            if (accept(TokenType.ARRAY_END)) {
-                break;
-            }
+        int size = list.size();
 
-            expect(TokenType.COMMA, reader);
+        Object array = Array.newInstance(componentType, size);
+
+        for (int i = 0; i < size; ++i) {
+            Array.set(array, i, list.get(i));
         }
 
-        expect(TokenType.ARRAY_END, reader);
-
-        return list.toArray();
+        return array;
     }
 
     @SuppressWarnings("unchecked")
@@ -156,6 +187,10 @@ public class JsonBaseDeserializer {
     }
 
     private Object deserializeValue(JsonReader reader, Class<?> valueType) throws IOException, JsonParsingException {
+        if (accept(TokenType.NULL)) {
+            return null;
+        }
+
         String type = valueType.getName();
 
         if (type.equals("java.lang.String")) {

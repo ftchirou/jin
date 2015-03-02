@@ -7,6 +7,7 @@ import com.github.ftchirou.yajl.serializer.JsonBaseSerializer;
 import com.github.ftchirou.yajl.io.JsonWriter;
 import org.joda.time.DateTime;
 import org.joda.time.Years;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -15,6 +16,7 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class JsonBaseSerializerTest {
 
     @Test
