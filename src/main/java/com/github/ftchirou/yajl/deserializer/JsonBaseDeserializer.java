@@ -28,14 +28,16 @@ public class JsonBaseDeserializer {
     }
 
     private <T> T deserializeObject(JsonReader reader, Class<T> cls) throws IOException, JsonParsingException {
-        expect(TokenType.OBJECT_START, reader);
-
-        if (accept(TokenType.OBJECT_END)) {
-            expect(TokenType.OBJECT_END, reader);
-        }
-
         try {
             T object = cls.newInstance();
+
+            expect(TokenType.OBJECT_START, reader);
+
+            if (accept(TokenType.OBJECT_END)) {
+                expect(TokenType.OBJECT_END, reader);
+
+                return object;
+            }
 
             deserializeObjectFields(object, reader, cls);
 
@@ -127,6 +129,8 @@ public class JsonBaseDeserializer {
 
         if (accept(TokenType.OBJECT_END)) {
             expect(TokenType.OBJECT_END, reader);
+
+            return;
         }
 
         deserializeMapEntries(map, reader, keyClass, valueClass);
