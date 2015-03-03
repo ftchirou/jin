@@ -9,7 +9,7 @@ import com.github.ftchirou.yajl.parser.JsonProcessingException;
 import java.io.*;
 import java.nio.charset.Charset;
 
-public class JsonReader {
+public class JsonReader implements Readable, Closeable {
 
     final char STRING_DELIMITER = '"';
     final char LEFT_BRACE = '{';
@@ -43,14 +43,6 @@ public class JsonReader {
         lookahead = -1;
 
         reader = new StringReader(s);
-    }
-
-    public boolean ready() throws IOException {
-        return reader.ready();
-    }
-
-    public void close() throws IOException {
-        reader.close();
     }
 
     public JsonToken currentToken() {
@@ -145,6 +137,20 @@ public class JsonReader {
         }
 
         throw new UnrecognizedTokenException("invalid character " + symbol + " at position " + cursor);
+    }
+
+    public boolean ready() throws IOException {
+        return reader.ready();
+    }
+
+    @Override
+    public void close() throws IOException {
+        reader.close();
+    }
+
+    @Override
+    public int read(java.nio.CharBuffer cb) throws IOException {
+        return reader.read(cb);
     }
 
     private int read() throws IOException {

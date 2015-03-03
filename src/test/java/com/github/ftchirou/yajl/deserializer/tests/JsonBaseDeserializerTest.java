@@ -122,6 +122,8 @@ public class JsonBaseDeserializerTest {
         POJOWithAnnotations pojo = deserializer.deserialize(reader, POJOWithAnnotations.class);
 
         System.out.println(pojo);
+
+        reader.close();
     }
 
     static class JsonDeserializer {
