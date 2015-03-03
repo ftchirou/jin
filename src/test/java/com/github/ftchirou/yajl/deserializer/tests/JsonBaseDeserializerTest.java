@@ -8,7 +8,6 @@ import com.github.ftchirou.yajl.type.MapType;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -113,6 +112,16 @@ public class JsonBaseDeserializerTest {
         Map<String, List<Integer>> map = deserializer.deserialize(reader, new MapType(LinkedHashMap.class, String.class, new CollectionType(ArrayList.class, Integer.class)));
 
         System.out.println(map);
+    }
+
+    @Test
+    public void deserializePOJOWithAnnotations() throws IOException, JsonProcessingException {
+        JsonBaseDeserializer deserializer = new JsonBaseDeserializer();
+        JsonReader reader = new JsonReader("{\"first_name\":\"John\",\"last_name\":\"Doe\",\"birth_date\":\"1989-04-08T15:15:00.000Z\",\"gender\":\"male\",\"friends\":[\"Jane\",\"Jill\",\"Helen\"]}");
+
+        POJOWithAnnotations pojo = deserializer.deserialize(reader, POJOWithAnnotations.class);
+
+        System.out.println(pojo);
     }
 
     static class JsonDeserializer {

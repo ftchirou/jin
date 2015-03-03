@@ -1,8 +1,7 @@
 package com.github.ftchirou.yajl.serializer;
 
 import com.github.ftchirou.yajl.annotations.JsonGetter;
-import com.github.ftchirou.yajl.annotations.JsonIgnore;
-import com.github.ftchirou.yajl.annotations.JsonProperty;
+import com.github.ftchirou.yajl.annotations.Json;
 import com.github.ftchirou.yajl.annotations.JsonValue;
 import com.github.ftchirou.yajl.io.JsonWriter;
 
@@ -114,11 +113,11 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
         String fieldName = field.getName();
         JsonSerializer serializer = this;
 
-        if (field.isAnnotationPresent(JsonProperty.class)) {
-            JsonProperty property = field.getAnnotation(JsonProperty.class);
+        if (field.isAnnotationPresent(Json.class)) {
+            Json property = field.getAnnotation(Json.class);
 
-            if (property.name() != null && !property.name().trim().equals("")) {
-                fieldName = property.name();
+            if (property.propertyName() != null && !property.propertyName().trim().equals("")) {
+                fieldName = property.propertyName();
             }
 
             if (property.serializeWith() != null && property.serializeWith() != JsonSerializer.class) {
@@ -314,10 +313,10 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
     }
 
     private boolean isMarkedAsIgnorable(Field field) {
-        if (field.isAnnotationPresent(JsonIgnore.class)) {
-            JsonIgnore ignore = field.getAnnotation(JsonIgnore.class);
+        if (field.isAnnotationPresent(Json.class)) {
+            Json json = field.getAnnotation(Json.class);
 
-            if (ignore != null && ignore.value()) {
+            if (json != null && json.ignore()) {
                 return true;
             }
         }

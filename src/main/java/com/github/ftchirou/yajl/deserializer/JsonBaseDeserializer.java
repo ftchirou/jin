@@ -1,5 +1,7 @@
 package com.github.ftchirou.yajl.deserializer;
 
+import com.github.ftchirou.yajl.annotations.Json;
+import com.github.ftchirou.yajl.annotations.JsonValue;
 import com.github.ftchirou.yajl.io.JsonReader;
 import com.github.ftchirou.yajl.lexer.JsonToken;
 import com.github.ftchirou.yajl.lexer.TokenType;
@@ -19,8 +21,6 @@ import java.math.BigInteger;
 import java.util.*;
 
 public class JsonBaseDeserializer {
-
-    private JsonToken token;
 
     @SuppressWarnings("unchecked")
     public <T> T deserialize(JsonReader reader) throws IOException, JsonProcessingException {
@@ -58,7 +58,9 @@ public class JsonBaseDeserializer {
                 return object;
             }
 
-            deserializeObjectFields(object, reader, cls);
+            HashMap<String, String> fieldNamesMap = buildFieldNamesMap(cls);
+
+            deserializeObjectFields(object, fieldNamesMap, reader, cls);
 
             return object;
 
@@ -69,27 +71,36 @@ public class JsonBaseDeserializer {
         }
     }
 
-    private void deserializeObjectFields(Object object, JsonReader reader, Class<?> cls) throws IOException, JsonProcessingException {
+    private void deserializeObjectFields(Object object, HashMap<String, String> fieldNamesMap, JsonReader reader, Class<?> cls) throws IOException, JsonProcessingException {
         JsonToken fieldNameToken = reader.expect(TokenType.STRING);
 
         reader.expect(TokenType.COLON);
 
         try {
-            Field field = cls.getDeclaredField(fieldNameToken.getValue());
+            String fieldName = fieldNamesMap.get(fieldNameToken.getValue());
+
+            if (fieldName == null) {
+                return;
+            }
+
+            Field field = cls.getDeclaredField(fieldName);
             field.setAccessible(true);
 
-            if (Collection.class.isAssignableFrom(field.getType())) {
-                deserializeCollection((Collection) field.get(object), reader, getCollectionTypeParameter(field));
-                
-            } else if (Map.class.isAssignableFrom(field.getType())) {
-                List<Type> mapTypeParameters = getMapTypeParameters(field);
+            if (!deserializeFieldWithCustomDeserializer(reader, object, field)) {
 
-                deserializeMap((Map) field.get(object), reader, mapTypeParameters.get(0), mapTypeParameters.get(1));
+                if (Collection.class.isAssignableFrom(field.getType())) {
+                    deserializeCollection((Collection) field.get(object), reader, getCollectionTypeParameter(field));
 
-            } else {
-                Object value = deserializeValue(reader, field.getType());
+                } else if (Map.class.isAssignableFrom(field.getType())) {
+                    List<Type> mapTypeParameters = getMapTypeParameters(field);
 
-                field.set(object, value);
+                    deserializeMap((Map) field.get(object), reader, mapTypeParameters.get(0), mapTypeParameters.get(1));
+
+                } else {
+                    Object value = deserializeValue(reader, field.getType());
+
+                    field.set(object, value);
+                }
             }
 
             if (reader.accept(TokenType.OBJECT_END)) {
@@ -100,13 +111,39 @@ public class JsonBaseDeserializer {
 
             reader.expect(TokenType.COMMA);
 
-            deserializeObjectFields(object, reader, cls);
+            deserializeObjectFields(object, fieldNamesMap, reader, cls);
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
 
             throw new JsonProcessingException(e);
         }
+    }
+
+    private boolean deserializeFieldWithCustomDeserializer(JsonReader reader, Object object, Field field) throws IOException, JsonProcessingException {
+        if (field.isAnnotationPresent(Json.class)) {
+            Json json = field.getAnnotation(Json.class);
+
+            if (json != null && json.deserializeWith() != null && json.deserializeWith() != JsonDeserializer.class) {
+                Class<? extends JsonDeserializer> deserializerClass = json.deserializeWith();
+
+                try {
+                    JsonDeserializer deserializer = deserializerClass.newInstance();
+                    if (deserializer != null) {
+                        Object value = deserializer.deserialize(reader);
+
+                        field.set(object, value);
+
+                        return true;
+                    }
+                } catch (InstantiationException | IllegalAccessException e) {
+                    e.printStackTrace();
+                    throw new JsonProcessingException(e);
+                }
+            }
+        }
+
+        return false;
     }
 
     private Object deserializeArray(JsonReader reader, Class<?> componentType) throws IOException, JsonProcessingException {
@@ -224,6 +261,9 @@ public class JsonBaseDeserializer {
 
                 } else if (cls.isArray()) {
                     return deserializeArray(reader, cls.getComponentType());
+
+                } else if (cls.isEnum()) {
+                    return deserializeEnumConstant(reader, cls);
 
                 } else if (Collection.class.isAssignableFrom(cls)) {
                     Collection collection = (Collection) cls.newInstance();
@@ -387,6 +427,36 @@ public class JsonBaseDeserializer {
         return null;
     }
 
+    private Object deserializeEnumConstant(JsonReader reader, Class<?> cls) throws IOException, JsonProcessingException {
+        Object[] constants = cls.getEnumConstants();
+        String value = deserializeString(reader);
+
+        try {
+            for (Object constant : constants) {
+                String constantValue = constant.toString();
+
+                Enum en = (Enum) constant;
+                Field enumConstant = en.getClass().getDeclaredField(en.name());
+
+                if (enumConstant.isAnnotationPresent(JsonValue.class)) {
+                    JsonValue jsonValue = enumConstant.getAnnotation(JsonValue.class);
+
+                    if (jsonValue != null && !jsonValue.value().trim().equals("")) {
+                        constantValue = jsonValue.value();
+                    }
+                }
+
+                if (value.equals(constantValue)) {
+                    return constant;
+                }
+            }
+        } catch (NoSuchFieldException e) {
+            throw new JsonProcessingException(e);
+        }
+
+        return null;
+    }
+
     private String deserializeString(JsonReader reader) throws IOException, JsonProcessingException {
         JsonToken expected = reader.expect(TokenType.STRING);
 
@@ -464,5 +534,28 @@ public class JsonBaseDeserializer {
         }
 
         return new ArrayList<>();
+    }
+
+    private HashMap<String, String> buildFieldNamesMap(Class<?> cls) {
+        HashMap<String, String> map = new HashMap<>();
+
+        Field[] fields = cls.getDeclaredFields();
+
+        for (Field field: fields) {
+            field.setAccessible(true);
+
+            if (!field.isAnnotationPresent(Json.class)) {
+                map.put(field.getName(), field.getName());
+
+            } else {
+                Json json = field.getAnnotation(Json.class);
+
+                if (json.propertyName() != null && !json.propertyName().trim().equals("")) {
+                    map.put(json.propertyName(), field.getName());
+                }
+            }
+        }
+
+        return map;
     }
 }

@@ -1,7 +1,7 @@
 package com.github.ftchirou.yajl.serializer.tests;
 
 import com.github.ftchirou.yajl.annotations.JsonGetter;
-import com.github.ftchirou.yajl.annotations.JsonProperty;
+import com.github.ftchirou.yajl.annotations.Json;
 import com.github.ftchirou.yajl.annotations.JsonValue;
 import com.github.ftchirou.yajl.serializer.JsonBaseSerializer;
 import com.github.ftchirou.yajl.io.JsonWriter;
@@ -109,13 +109,13 @@ public class JsonBaseSerializerTest {
             FEMALE
         }
 
-        @JsonProperty(name="first_name")
+        @Json(propertyName="first_name")
         private String firstName;
 
-        @JsonProperty(name="last_name")
+        @Json(propertyName="last_name")
         private String lastName;
 
-        @JsonProperty(name="birth_date", serializeWith=DateTimeSerializer.class)
+        @Json(propertyName="birth_date", serializeWith=DateTimeSerializer.class)
         private DateTime birthDate;
 
         private Gender gender;
