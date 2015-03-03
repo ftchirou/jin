@@ -5,7 +5,9 @@ import com.github.ftchirou.yajl.lexer.JsonToken;
 import com.github.ftchirou.yajl.lexer.TokenType;
 import com.github.ftchirou.yajl.lexer.UnrecognizedTokenException;
 import com.github.ftchirou.yajl.parser.JsonParsingException;
-import com.github.ftchirou.yajl.type.TypeReference;
+import com.github.ftchirou.yajl.type.CollectionType;
+import com.github.ftchirou.yajl.type.MapType;
+import com.github.ftchirou.yajl.type.TypeLiteral;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -23,43 +25,11 @@ public class JsonBaseDeserializer {
 
     private JsonToken token;
 
-    public <T> T deserialize(JsonReader reader, Class<T> cls) throws IOException, JsonParsingException {
-        token = toNextToken(reader);
-
-        return cls.cast(deserializeValue(reader, cls));
-    }
-
     @SuppressWarnings("unchecked")
-    public <T> T deserialize(JsonReader reader, TypeReference reference) throws IOException, JsonParsingException {
+    public <T> T deserialize(JsonReader reader, Type type) throws IOException, JsonParsingException {
         token = toNextToken(reader);
 
-        try {
-            Class<?> cls = reference.getReferenceClass();
-
-            if (Collection.class.isAssignableFrom(cls)) {
-                Collection collection = (Collection) reference.newInstance();
-
-                deserializeCollection(collection, reader, Class.forName(reference.getType().toString().split("<|>")[1].trim()));
-
-                return (T) collection;
-            }
-
-            if (Map.class.isAssignableFrom(cls)) {
-                Map map = (Map) reference.newInstance();
-
-                String[] keyValueTypes = reference.getType().toString().split("<|>")[1].split(",");
-
-                deserializeMap(map, reader, Class.forName(keyValueTypes[0].trim()), Class.forName(keyValueTypes[1].trim()));
-
-                return (T) map;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-        }
-
-        return null;
+        return (T) deserializeValue(reader, type);
     }
 
     private <T> T deserializeObject(JsonReader reader, Class<T> cls) throws IOException, JsonParsingException {
@@ -139,7 +109,7 @@ public class JsonBaseDeserializer {
     }
 
     @SuppressWarnings("unchecked")
-    private void deserializeCollection(Collection collection, JsonReader reader, Class<?> componentType) throws IOException, JsonParsingException {
+    private void deserializeCollection(Collection collection, JsonReader reader, Type componentType) throws IOException, JsonParsingException {
         expect(TokenType.ARRAY_START, reader);
 
         while (!accept(TokenType.ARRAY_END)) {
@@ -155,7 +125,7 @@ public class JsonBaseDeserializer {
         expect(TokenType.ARRAY_END, reader);
     }
 
-    private void deserializeMap(Map map, JsonReader reader, Class<?> keyClass, Class<?> valueClass) throws IOException, JsonParsingException {
+    private void deserializeMap(Map map, JsonReader reader, Type keyType, Type valueType) throws IOException, JsonParsingException {
         expect(TokenType.OBJECT_START, reader);
 
         if (accept(TokenType.OBJECT_END)) {
@@ -164,14 +134,16 @@ public class JsonBaseDeserializer {
             return;
         }
 
-        deserializeMapEntries(map, reader, keyClass, valueClass);
+        deserializeMapEntries(map, reader, keyType, valueType);
     }
 
     @SuppressWarnings("unchecked")
-    private void deserializeMapEntries(Map map, JsonReader reader, Class<?> keyClass, Class<?> valueClass) throws IOException, JsonParsingException {
-        Object key = deserializeValue(reader, keyClass);
+    private void deserializeMapEntries(Map map, JsonReader reader, Type keyType, Type valueType) throws IOException, JsonParsingException {
+        Object key = deserializeValue(reader, keyType);
+
         expect(TokenType.COLON, reader);
-        Object value = deserializeValue(reader, valueClass);
+
+        Object value = deserializeValue(reader, valueType);
 
         map.put(key, value);
 
@@ -183,46 +155,97 @@ public class JsonBaseDeserializer {
 
         expect(TokenType.COMMA, reader);
 
-        deserializeMapEntries(map, reader, keyClass, valueClass);
+        deserializeMapEntries(map, reader, keyType, valueType);
     }
 
-    private Object deserializeValue(JsonReader reader, Class<?> valueType) throws IOException, JsonParsingException {
+    private Object deserializeValue(JsonReader reader, Type valueType) throws IOException, JsonParsingException {
         if (accept(TokenType.NULL)) {
             return null;
         }
 
-        String type = valueType.getName();
+        if (valueType instanceof TypeLiteral) {
+            return deserializeComplexValue(reader, (TypeLiteral) valueType);
 
-        if (type.equals("java.lang.String")) {
-            return deserializeString(reader);
+        } else if (valueType instanceof Class<?>) {
+            Class<?> cls = (Class<?>) valueType;
 
-        } else if (type.equals("int") || type.equals("java.lang.Integer")) {
-            return deserializeInteger(reader);
+            String type = cls.getName();
 
-        } else if (type.equals("boolean") || type.equals("java.lang.Boolean")) {
-            return deserializeBoolean(reader);
+            if (type.equals("java.lang.String")) {
+                return deserializeString(reader);
 
-        } else if (type.equals("long") || type.equals("java.lang.Long")) {
-            return deserializeLong(reader);
+            } else if (type.equals("int") || type.equals("java.lang.Integer")) {
+                return deserializeInteger(reader);
 
-        } else if (type.equals("double") || type.equals("java.lang.Double")) {
-            return deserializeDouble(reader);
+            } else if (type.equals("boolean") || type.equals("java.lang.Boolean")) {
+                return deserializeBoolean(reader);
 
-        } else if (type.equals("float") || type.equals("java.lang.Float")) {
-            return deserializeFloat(reader);
+            } else if (type.equals("long") || type.equals("java.lang.Long")) {
+                return deserializeLong(reader);
 
-        } else if (valueType.getName().equals("java.math.BigInteger")) {
-            return deserializeBigInteger(reader);
+            } else if (type.equals("double") || type.equals("java.lang.Double")) {
+                return deserializeDouble(reader);
 
-        } else if (valueType.getName().equals("java.math.BigDecimal")) {
-            return deserializeBigDecimal(reader);
+            } else if (type.equals("float") || type.equals("java.lang.Float")) {
+                return deserializeFloat(reader);
 
-        } else if (valueType.isArray()) {
-            return deserializeArray(reader, valueType.getComponentType());
+            } else if (cls.getName().equals("java.math.BigInteger")) {
+                return deserializeBigInteger(reader);
 
-        } else {
-            return deserializeObject(reader, valueType);
+            } else if (cls.getName().equals("java.math.BigDecimal")) {
+                return deserializeBigDecimal(reader);
+
+            } else if (cls.isArray()) {
+                return deserializeArray(reader, cls.getComponentType());
+
+            } else {
+                return deserializeObject(reader, cls);
+            }
         }
+
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T deserializeComplexValue(JsonReader reader, TypeLiteral typeLiteral) throws IOException, JsonParsingException {
+
+        try {
+            if (typeLiteral instanceof CollectionType) {
+                CollectionType collectionType = (CollectionType) typeLiteral;
+
+                Type concreteType = collectionType.getConcreteType();
+
+                if (concreteType instanceof Class<?>) {
+                    Class<?> containerClass = (Class<?>) concreteType;
+
+                    Collection collection = (Collection) containerClass.newInstance();
+
+                    deserializeCollection(collection, reader, collectionType.getElementType());
+
+                    return (T) collection;
+                }
+
+            } else if (typeLiteral instanceof MapType) {
+                MapType mapType = (MapType) typeLiteral;
+
+                Type concreteType = mapType.getConcreteType();
+
+                if (concreteType instanceof Class<?>) {
+                    Class<?> containerClass = (Class<?>) concreteType;
+
+                    Map map = (Map) containerClass.newInstance();
+
+                    deserializeMap(map, reader, mapType.getKeyType(), mapType.getValueType());
+
+                    return (T) map;
+                }
+            }
+
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     private String deserializeString(JsonReader reader) throws IOException, JsonParsingException {

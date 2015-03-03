@@ -3,7 +3,8 @@ package com.github.ftchirou.yajl.deserializer.tests;
 import com.github.ftchirou.yajl.deserializer.JsonBaseDeserializer;
 import com.github.ftchirou.yajl.io.JsonReader;
 import com.github.ftchirou.yajl.parser.JsonParsingException;
-import com.github.ftchirou.yajl.type.TypeReference;
+import com.github.ftchirou.yajl.type.CollectionType;
+import com.github.ftchirou.yajl.type.MapType;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -62,10 +63,11 @@ public class JsonBaseDeserializerTest {
 
         JsonBaseDeserializer deserializer = new JsonBaseDeserializer();
 
-        JsonReader reader = new JsonReader("[13,2,3,48,5]");
+        JsonReader reader = new JsonReader("[ [13,2], [3,48,5] ]");
 
 
-        List<Integer> integers = deserializer.deserialize(reader, new TypeReference<ArrayList<Integer>>() { });
+        List<List<Integer>> integers = deserializer.deserialize(reader, new CollectionType(ArrayList.class,
+                                                                            new CollectionType(ArrayList.class, Integer.class)));
 
         System.out.println(integers);
     }
@@ -74,9 +76,9 @@ public class JsonBaseDeserializerTest {
     public void deserializeSimpleMap() throws IOException, JsonParsingException {
         JsonBaseDeserializer deserializer = new JsonBaseDeserializer();
 
-        JsonReader reader = new JsonReader("{\"a\":1,\"b\":2,\"c\":3}");
+        JsonReader reader = new JsonReader("{\"a\":[1,9,0,8],\"b\":[2,3],\"c\":[3,4]}");
 
-        Map<String, Integer> map = deserializer.deserialize(reader, new TypeReference<LinkedHashMap<String, Integer>>() { });
+        Map<String, List<Integer>> map = deserializer.deserialize(reader, new MapType(LinkedHashMap.class, String.class, new CollectionType(ArrayList.class, Integer.class)));
 
         System.out.println(map);
     }
