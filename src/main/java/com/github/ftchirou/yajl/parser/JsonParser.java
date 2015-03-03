@@ -20,7 +20,7 @@ public class JsonParser {
         this.cursor = 0;
     }
 
-    public JsonNode parse(String jsonString) throws JsonParsingException {
+    public JsonNode parse(String jsonString) throws JsonProcessingException {
         JsonTokenizer tokenizer = new JsonTokenizer();
 
         cursor = 0;
@@ -31,25 +31,25 @@ public class JsonParser {
             return parseValue();
 
         } catch (UnrecognizedTokenException e) {
-            throw new JsonParsingException(e);
+            throw new JsonProcessingException(e);
         }
     }
 
-    private void expect(TokenType type) throws JsonParsingException {
+    private void expect(TokenType type) throws JsonProcessingException {
         if (cursor >= tokens.size()) {
-            throw new JsonParsingException("unexpected end of input.");
+            throw new JsonProcessingException("unexpected end of input.");
         }
 
         JsonToken token = tokens.get(cursor);
 
         if (token.getType() != type) {
-            throw new JsonParsingException("expected " + type.toString() + " at position " + token.getPosition());
+            throw new JsonProcessingException("expected " + type.toString() + " at position " + token.getPosition());
         }
 
         cursor++;
     }
 
-    public JsonNode parseObject() throws JsonParsingException {
+    public JsonNode parseObject() throws JsonProcessingException {
         expect(TokenType.OBJECT_START);
 
         if (tokens.get(cursor).getType() == TokenType.OBJECT_END) {
@@ -69,7 +69,7 @@ public class JsonParser {
 
     }
 
-    public JsonNode parseArray() throws JsonParsingException {
+    public JsonNode parseArray() throws JsonProcessingException {
         expect(TokenType.ARRAY_START);
 
         JsonArray array = new JsonArray();
@@ -93,7 +93,7 @@ public class JsonParser {
         return array;
     }
 
-    private HashMap<String, JsonNode> parseMembers() throws JsonParsingException {
+    private HashMap<String, JsonNode> parseMembers() throws JsonProcessingException {
         LinkedHashMap<String, JsonNode> members = new LinkedHashMap<>();
 
         JsonPair pair = parsePair();
@@ -109,7 +109,7 @@ public class JsonParser {
         return members;
     }
 
-    private JsonPair parsePair() throws JsonParsingException {
+    private JsonPair parsePair() throws JsonProcessingException {
         int keyPosition = cursor;
 
         expect(TokenType.STRING);
@@ -118,7 +118,7 @@ public class JsonParser {
         return new JsonPair(tokens.get(keyPosition).getValue(), parseValue());
     }
 
-    private JsonNode parseValue() throws JsonParsingException {
+    private JsonNode parseValue() throws JsonProcessingException {
         JsonToken token = tokens.get(cursor);
         JsonNode node;
 

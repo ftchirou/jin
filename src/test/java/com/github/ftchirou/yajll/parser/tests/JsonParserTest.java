@@ -2,7 +2,7 @@ package com.github.ftchirou.yajll.parser.tests;
 
 import com.github.ftchirou.yajl.json.*;
 import com.github.ftchirou.yajl.parser.JsonParser;
-import com.github.ftchirou.yajl.parser.JsonParsingException;
+import com.github.ftchirou.yajl.parser.JsonProcessingException;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,7 +24,7 @@ public class JsonParserTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void parseEmptyObject() throws JsonParsingException {
+    public void parseEmptyObject() throws JsonProcessingException {
         String json = "{}";
 
         JsonParser parser = new JsonParser();
@@ -36,7 +36,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseSimpleObjectWithStringValue() throws JsonParsingException {
+    public void parseSimpleObjectWithStringValue() throws JsonProcessingException {
         String json = "{ \"key\" :  \"value\" }";
 
         JsonParser parser =  new JsonParser();
@@ -48,7 +48,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseSimpleObjectWithStringValueWithSpaces() throws JsonParsingException {
+    public void parseSimpleObjectWithStringValueWithSpaces() throws JsonProcessingException {
         String json = "{ \"key\" : \"value\"\r\n}";
 
         JsonParser parser = new JsonParser();
@@ -67,7 +67,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseSimpleObjectWithIntValue() throws JsonParsingException {
+    public void parseSimpleObjectWithIntValue() throws JsonProcessingException {
         String json = "{ \"key\": 102 }";
 
         JsonParser parser = new JsonParser();
@@ -87,7 +87,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseSimpleQuoteInStringValue() throws JsonParsingException {
+    public void parseSimpleQuoteInStringValue() throws JsonProcessingException {
         String json = "{ \"key\" : \"ab\'c\" }";
 
         JsonParser parser = new JsonParser();
@@ -106,7 +106,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseLowercaseUnicodeStringValue() throws JsonParsingException {
+    public void parseLowercaseUnicodeStringValue() throws JsonProcessingException {
         String json = "{ \"key\" : \"\u2000\u20ff\" }";
 
         JsonParser parser = new JsonParser();
@@ -125,7 +125,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseUppercaseUnicodeStringValue() throws JsonParsingException {
+    public void parseUppercaseUnicodeStringValue() throws JsonProcessingException {
         String json = "{ \"key\" : \"\u2000\u20FF\" }";
 
         JsonParser parser = new JsonParser();
@@ -144,7 +144,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseNonProtectedSlashInStringValue() throws JsonParsingException {
+    public void parseNonProtectedSlashInStringValue() throws JsonProcessingException {
         String json = "{ \"key\" : \"http://foo\" }";
 
         JsonParser parser = new JsonParser();
@@ -163,7 +163,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseSimpleObjectWithDoubleValue() throws JsonParsingException {
+    public void parseSimpleObjectWithDoubleValue() throws JsonProcessingException {
         String json = "{ \"pi\" : 3.14E-10 }";
 
         JsonParser parser = new JsonParser();
@@ -182,7 +182,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseSimpleObjectWithLowercaseDoubleValue() throws JsonParsingException {
+    public void parseSimpleObjectWithLowercaseDoubleValue() throws JsonProcessingException {
         String json = "{ \"pi\" : 3.14e-10 }";
 
         JsonParser parser = new JsonParser();
@@ -200,7 +200,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseObjectWithLongValue() throws JsonParsingException {
+    public void parseObjectWithLongValue() throws JsonProcessingException {
         String json = "{ \"key\" : 12345123456789 }";
 
         JsonParser parser = new JsonParser();
@@ -221,7 +221,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseObjectWithBigIntegerValue() throws JsonParsingException {
+    public void parseObjectWithBigIntegerValue() throws JsonProcessingException {
         String json = "{ \"key\" : 123456789123456789123456789 }";
 
         JsonParser parser = new JsonParser();
@@ -241,7 +241,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseObjectWithDoublePrecisionFloatingPointValue() throws JsonParsingException {
+    public void parseObjectWithDoublePrecisionFloatingPointValue() throws JsonProcessingException {
         String json = "{ \"pi\" : 3.14159265358979323846 }";
 
         JsonParser parser = new JsonParser();
@@ -262,7 +262,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseSimpleIntArray() throws JsonParsingException {
+    public void parseSimpleIntArray() throws JsonProcessingException {
         String json = "[11, 42, 74, 55, 63]";
 
         JsonParser parser = new JsonParser();
@@ -288,7 +288,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseArrayOfEmptyObjects() throws JsonParsingException {
+    public void parseArrayOfEmptyObjects() throws JsonProcessingException {
         String json = "[ { }, { }, []]";
 
         JsonParser parser = new JsonParser();
@@ -308,7 +308,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseObjectWithNullValue() throws JsonParsingException {
+    public void parseObjectWithNullValue() throws JsonProcessingException {
         String json = "{ \"key\" : null }";
 
         JsonParser parser =  new JsonParser();
@@ -326,7 +326,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseObjectWithBooleanTrueValue() throws JsonParsingException {
+    public void parseObjectWithBooleanTrueValue() throws JsonProcessingException {
         String json = "{ \"key\" : true }";
 
         JsonParser parser =  new JsonParser();
@@ -345,7 +345,7 @@ public class JsonParserTest {
     }
 
     @Test
-    public void parseObjectWithBooleanFalseValue() throws JsonParsingException {
+    public void parseObjectWithBooleanFalseValue() throws JsonProcessingException {
         String json = "{ \"key\" : false }";
 
         JsonParser parser =  new JsonParser();
@@ -364,10 +364,10 @@ public class JsonParserTest {
     }
 
     @Test
-    public void throwExceptionIfStringValueIsUnclosed() throws JsonParsingException {
+    public void throwExceptionIfStringValueIsUnclosed() throws JsonProcessingException {
         String json = "{ \"key\" : \"value }";
 
-        thrown.expect(JsonParsingException.class);
+        thrown.expect(JsonProcessingException.class);
         thrown.expectMessage(containsString("unclosed string literal"));
 
         JsonParser parser = new JsonParser();
@@ -375,20 +375,20 @@ public class JsonParserTest {
     }
 
     @Test
-    public void throwExceptionIfKeyStringIsUnclosed() throws JsonParsingException {
+    public void throwExceptionIfKeyStringIsUnclosed() throws JsonProcessingException {
         String json = "{ \"key : \"value\" }";
 
-        thrown.expect(JsonParsingException.class);
+        thrown.expect(JsonProcessingException.class);
 
         JsonParser parser = new JsonParser();
         parser.parse(json);
     }
 
     @Test
-    public void throwExceptionIfValueIsASingleQuotedString() throws JsonParsingException {
+    public void throwExceptionIfValueIsASingleQuotedString() throws JsonProcessingException {
         String json = "{ \"key\" : 'value' }";
 
-        thrown.expect(JsonParsingException.class);
+        thrown.expect(JsonProcessingException.class);
         thrown.expectMessage(containsString("invalid character \'"));
 
         JsonParser parser = new JsonParser();
@@ -396,10 +396,10 @@ public class JsonParserTest {
     }
 
     @Test
-    public void throwExceptionIfStringValueIsNotQuoted() throws JsonParsingException {
+    public void throwExceptionIfStringValueIsNotQuoted() throws JsonProcessingException {
         String json = "{ \"key\" : value }";
 
-        thrown.expect(JsonParsingException.class);
+        thrown.expect(JsonProcessingException.class);
         thrown.expectMessage(containsString("invalid character v"));
 
         JsonParser parser = new JsonParser();
@@ -407,10 +407,10 @@ public class JsonParserTest {
     }
 
     @Test
-    public void throwExceptionIfKeyIsNotDoubleQuoted() throws JsonParsingException {
+    public void throwExceptionIfKeyIsNotDoubleQuoted() throws JsonProcessingException {
         String json = "{ key : \"value\" }";
 
-        thrown.expect(JsonParsingException.class);
+        thrown.expect(JsonProcessingException.class);
         thrown.expectMessage(containsString("invalid character k"));
 
         JsonParser parser = new JsonParser();
@@ -418,10 +418,10 @@ public class JsonParserTest {
     }
 
     @Test
-    public void throwExceptionIfKeyIsSingleQuoted() throws JsonParsingException {
+    public void throwExceptionIfKeyIsSingleQuoted() throws JsonProcessingException {
         String json = "{ 'key' : \"value\" }";
 
-        thrown.expect(JsonParsingException.class);
+        thrown.expect(JsonProcessingException.class);
         thrown.expectMessage(containsString("invalid character '"));
 
         JsonParser parser = new JsonParser();
