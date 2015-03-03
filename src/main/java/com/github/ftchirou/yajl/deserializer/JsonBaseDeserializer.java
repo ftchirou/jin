@@ -3,7 +3,6 @@ package com.github.ftchirou.yajl.deserializer;
 import com.github.ftchirou.yajl.io.JsonReader;
 import com.github.ftchirou.yajl.lexer.JsonToken;
 import com.github.ftchirou.yajl.lexer.TokenType;
-import com.github.ftchirou.yajl.lexer.UnrecognizedTokenException;
 import com.github.ftchirou.yajl.parser.JsonProcessingException;
 import com.github.ftchirou.yajl.type.CollectionType;
 import com.github.ftchirou.yajl.type.GuessType;
@@ -25,7 +24,7 @@ public class JsonBaseDeserializer {
 
     @SuppressWarnings("unchecked")
     public <T> T deserialize(JsonReader reader) throws IOException, JsonProcessingException {
-        token = toNextToken(reader);
+        reader.readToken();
 
         try {
             return (T) deserializeUnknownTypeValue(reader);
@@ -37,7 +36,7 @@ public class JsonBaseDeserializer {
 
     @SuppressWarnings("unchecked")
     public <T> T deserialize(JsonReader reader, Type type) throws IOException, JsonProcessingException {
-        token = toNextToken(reader);
+        reader.readToken();
 
         try {
             return (T) deserializeValue(reader, type);
@@ -51,10 +50,10 @@ public class JsonBaseDeserializer {
         try {
             T object = cls.newInstance();
 
-            expect(TokenType.OBJECT_START, reader);
+            reader.expect(TokenType.OBJECT_START);
 
-            if (accept(TokenType.OBJECT_END)) {
-                expect(TokenType.OBJECT_END, reader);
+            if (reader.accept(TokenType.OBJECT_END)) {
+                reader.expect(TokenType.OBJECT_END);
 
                 return object;
             }
@@ -71,8 +70,9 @@ public class JsonBaseDeserializer {
     }
 
     private void deserializeObjectFields(Object object, JsonReader reader, Class<?> cls) throws IOException, JsonProcessingException {
-        JsonToken fieldNameToken = expect(TokenType.STRING, reader);
-        expect(TokenType.COLON, reader);
+        JsonToken fieldNameToken = reader.expect(TokenType.STRING);
+
+        reader.expect(TokenType.COLON);
 
         try {
             Field field = cls.getDeclaredField(fieldNameToken.getValue());
@@ -92,13 +92,13 @@ public class JsonBaseDeserializer {
                 field.set(object, value);
             }
 
-            if (accept(TokenType.OBJECT_END)) {
-                expect(TokenType.OBJECT_END, reader);
+            if (reader.accept(TokenType.OBJECT_END)) {
+                reader.expect(TokenType.OBJECT_END);
 
                 return;
             }
 
-            expect(TokenType.COMMA, reader);
+            reader.expect(TokenType.COMMA);
 
             deserializeObjectFields(object, reader, cls);
 
@@ -127,26 +127,26 @@ public class JsonBaseDeserializer {
 
     @SuppressWarnings("unchecked")
     private void deserializeCollection(Collection collection, JsonReader reader, Type componentType) throws IOException, JsonProcessingException {
-        expect(TokenType.ARRAY_START, reader);
+        reader.expect(TokenType.ARRAY_START);
 
-        while (!accept(TokenType.ARRAY_END)) {
+        while (!reader.accept(TokenType.ARRAY_END)) {
             collection.add(deserializeValue(reader, componentType));
 
-            if (accept(TokenType.ARRAY_END)) {
+            if (reader.accept(TokenType.ARRAY_END)) {
                 break;
             }
 
-            expect(TokenType.COMMA, reader);
+            reader.expect(TokenType.COMMA);
         }
 
-        expect(TokenType.ARRAY_END, reader);
+        reader.expect(TokenType.ARRAY_END);
     }
 
     private void deserializeMap(Map map, JsonReader reader, Type keyType, Type valueType) throws IOException, JsonProcessingException {
-        expect(TokenType.OBJECT_START, reader);
+        reader.expect(TokenType.OBJECT_START);
 
-        if (accept(TokenType.OBJECT_END)) {
-            expect(TokenType.OBJECT_END, reader);
+        if (reader.accept(TokenType.OBJECT_END)) {
+            reader.expect(TokenType.OBJECT_END);
 
             return;
         }
@@ -158,30 +158,29 @@ public class JsonBaseDeserializer {
     private void deserializeMapEntries(Map map, JsonReader reader, Type keyType, Type valueType) throws IOException, JsonProcessingException {
         Object key = deserializeValue(reader, keyType);
 
-        expect(TokenType.COLON, reader);
+        reader.expect(TokenType.COLON);
 
         Object value = deserializeValue(reader, valueType);
 
         map.put(key, value);
 
-        if (accept(TokenType.OBJECT_END)) {
-            expect(TokenType.OBJECT_END, reader);
+        if (reader.accept(TokenType.OBJECT_END)) {
+            reader.expect(TokenType.OBJECT_END);
 
             return;
         }
 
-        expect(TokenType.COMMA, reader);
+        reader.expect(TokenType.COMMA);
 
         deserializeMapEntries(map, reader, keyType, valueType);
     }
 
     private Object deserializeValue(JsonReader reader, Type valueType) throws IOException, JsonProcessingException {
-        if (accept(TokenType.NULL)) {
+        if (reader.accept(TokenType.NULL)) {
             return null;
         }
 
         try {
-
             if (valueType instanceof TypeLiteral) {
                 return deserializeComplexValue(reader, (TypeLiteral) valueType);
 
@@ -329,20 +328,20 @@ public class JsonBaseDeserializer {
     }
 
     private Object deserializeUnknownTypeValue(JsonReader reader) throws IOException, JsonProcessingException {
-        if (accept(TokenType.NULL)) {
+        if (reader.accept(TokenType.NULL)) {
             return null;
         }
 
-        if (accept(TokenType.STRING)) {
+        if (reader.accept(TokenType.STRING)) {
             return deserializeString(reader);
         }
 
-        if (accept(TokenType.TRUE) || accept(TokenType.FALSE)) {
+        if (reader.accept(TokenType.TRUE) || reader.accept(TokenType.FALSE)) {
             return deserializeBoolean(reader);
         }
 
-        if (accept(TokenType.NUMBER)) {
-            String value = token.getValue();
+        if (reader.accept(TokenType.NUMBER)) {
+            String value = reader.currentToken().getValue();
 
             if (value.contains(".") || value.contains("e") || value.contains("E")) {
 
@@ -369,7 +368,7 @@ public class JsonBaseDeserializer {
             }
         }
 
-        if (accept(TokenType.ARRAY_START)) {
+        if (reader.accept(TokenType.ARRAY_START)) {
             List<Object> list = new ArrayList<>();
 
             deserializeCollection(list, reader, new GuessType());
@@ -377,7 +376,7 @@ public class JsonBaseDeserializer {
             return list;
         }
 
-        if (accept(TokenType.OBJECT_START)) {
+        if (reader.accept(TokenType.OBJECT_START)) {
             Map<Object, Object> map = new LinkedHashMap<>();
 
             deserializeMap(map, reader, new GuessType(), new GuessType());
@@ -389,55 +388,55 @@ public class JsonBaseDeserializer {
     }
 
     private String deserializeString(JsonReader reader) throws IOException, JsonProcessingException {
-        JsonToken expected = expect(TokenType.STRING, reader);
+        JsonToken expected = reader.expect(TokenType.STRING);
 
         return expected.getValue();
     }
 
     private Integer deserializeInteger(JsonReader reader) throws IOException, JsonProcessingException {
-        JsonToken expected = expect(TokenType.NUMBER, reader);
+        JsonToken expected = reader.expect(TokenType.NUMBER);
 
         return Integer.parseInt(expected.getValue());
     }
 
     private Long deserializeLong(JsonReader reader) throws IOException, JsonProcessingException {
-        JsonToken expected = expect(TokenType.NUMBER, reader);
+        JsonToken expected = reader.expect(TokenType.NUMBER);
 
         return Long.parseLong(expected.getValue());
     }
 
     private Double deserializeDouble(JsonReader reader) throws IOException, JsonProcessingException {
-        JsonToken expected = expect(TokenType.NUMBER, reader);
+        JsonToken expected = reader.expect(TokenType.NUMBER);
 
         return Double.parseDouble(expected.getValue());
     }
 
     private Float deserializeFloat(JsonReader reader) throws IOException, JsonProcessingException {
-        JsonToken expected = expect(TokenType.NUMBER, reader);
+        JsonToken expected = reader.expect(TokenType.NUMBER);
 
         return Float.parseFloat(expected.getValue());
     }
 
     private BigInteger deserializeBigInteger(JsonReader reader) throws IOException, JsonProcessingException {
-        JsonToken expected = expect(TokenType.NUMBER, reader);
+        JsonToken expected = reader.expect(TokenType.NUMBER);
 
         return new BigInteger(expected.getValue());
     }
 
     private BigDecimal deserializeBigDecimal(JsonReader reader) throws IOException, JsonProcessingException {
-        JsonToken expected = expect(TokenType.NUMBER, reader);
+        JsonToken expected = reader.expect(TokenType.NUMBER);
 
         return new BigDecimal(expected.getValue());
     }
 
     private Boolean deserializeBoolean(JsonReader reader) throws IOException, JsonProcessingException {
-        if (!(accept(TokenType.TRUE) || accept(TokenType.FALSE))) {
-            throw new JsonProcessingException("expected 'true' or 'false' at position " + token.getPosition());
+        if (!(reader.accept(TokenType.TRUE) || reader.accept(TokenType.FALSE))) {
+            throw new JsonProcessingException("expected 'true' or 'false' at position " + reader.currentToken().getPosition());
         }
 
-        JsonToken booleanToken = token;
+        JsonToken booleanToken = reader.currentToken();
 
-        token = toNextToken(reader);
+        reader.readToken();
 
         return Boolean.parseBoolean(booleanToken.getValue());
     }
@@ -465,39 +464,5 @@ public class JsonBaseDeserializer {
         }
 
         return new ArrayList<>();
-    }
-
-    private JsonToken toNextToken(JsonReader reader) throws IOException, JsonProcessingException {
-        try {
-            return reader.nextToken();
-
-        } catch (UnrecognizedTokenException e) {
-            throw new JsonProcessingException(e);
-        }
-    }
-
-    private JsonToken expect(TokenType type, JsonReader reader) throws IOException, JsonProcessingException {
-        if (token.getType() == TokenType.END_OF_STREAM) {
-            throw new JsonProcessingException("unexpected end of input.");
-        }
-
-        if (token.getType() != type) {
-            throw new JsonProcessingException("expected " + type.toString() + " at position " + token.getPosition());
-        }
-
-        JsonToken expected = token;
-
-        try {
-            token = reader.nextToken();
-
-            return expected;
-
-        } catch (UnrecognizedTokenException e) {
-            throw new JsonProcessingException(e);
-        }
-    }
-
-    private boolean accept(TokenType type) {
-        return token.getType() != TokenType.END_OF_STREAM && token.getType() == type;
     }
 }

@@ -4,6 +4,7 @@ import com.github.ftchirou.yajl.lexer.JsonToken;
 import com.github.ftchirou.yajl.lexer.TokenType;
 import com.github.ftchirou.yajl.lexer.UnrecognizedTokenException;
 import com.github.ftchirou.yajl.lexer.fsm.FSM;
+import com.github.ftchirou.yajl.parser.JsonProcessingException;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -24,6 +25,8 @@ public class JsonReader {
     private int cursor;
 
     private int lookahead;
+
+    private JsonToken token;
 
     private Reader reader;
 
@@ -50,7 +53,51 @@ public class JsonReader {
         reader.close();
     }
 
-    public JsonToken nextToken() throws IOException, UnrecognizedTokenException {
+    public JsonToken currentToken() {
+        return token;
+    }
+
+    public JsonToken nextToken() throws IOException, JsonProcessingException {
+        readToken();
+
+        return token;
+    }
+
+    public boolean accept(TokenType type) {
+        return currentToken().getType() != TokenType.END_OF_STREAM && currentToken().getType() == type;
+    }
+
+    public JsonToken expect(TokenType type) throws IOException, JsonProcessingException {
+        if (currentToken().getType() == TokenType.END_OF_STREAM) {
+            throw new JsonProcessingException("unexpected end of input.");
+        }
+
+        if (currentToken().getType() != type) {
+            throw new JsonProcessingException("expected " + type.toString() + " at position " + currentToken().getPosition());
+        }
+
+        try {
+            JsonToken expected = currentToken();
+
+            token = getNextToken();
+
+            return expected;
+
+        } catch (UnrecognizedTokenException e) {
+            throw new JsonProcessingException(e);
+        }
+    }
+
+    public void readToken() throws IOException, JsonProcessingException {
+        try {
+            token = getNextToken();
+
+        } catch (UnrecognizedTokenException e) {
+            throw new JsonProcessingException(e);
+        }
+    }
+
+    private JsonToken getNextToken() throws IOException, UnrecognizedTokenException {
         int c = read();
 
         if (c < 0) {
