@@ -58,9 +58,9 @@ public class JsonBaseDeserializer {
                 return object;
             }
 
-            HashMap<String, String> fieldNamesMap = buildFieldNamesMap(cls);
+            HashMap<Class<?>, HashMap<String, String>> classHierarchyMap = buildClassHierarchyMap(cls);
 
-            deserializeObjectFields(object, fieldNamesMap, reader, cls);
+            deserializeObjectFields(object, classHierarchyMap, reader);
 
             return object;
 
@@ -71,18 +71,37 @@ public class JsonBaseDeserializer {
         }
     }
 
-    private void deserializeObjectFields(Object object, HashMap<String, String> fieldNamesMap, JsonReader reader, Class<?> cls) throws IOException, JsonProcessingException {
+    private void deserializeObjectFields(Object object, HashMap<Class<?>, HashMap<String, String>> classHierarchyMap, JsonReader reader) throws IOException, JsonProcessingException {
         JsonToken fieldNameToken = reader.expect(TokenType.STRING);
 
         reader.expect(TokenType.COLON);
 
+        String propertyName = fieldNameToken.getValue();
+
+        Class<?> cls = getDeclaringClass(propertyName, classHierarchyMap);
+
+        HashMap<String, String> map = classHierarchyMap.get(cls);
+        String fieldName = map.get(propertyName);
+
+        if (cls == null || fieldName == null) {
+            return;
+        }
+
+        deserializeField(reader, cls.cast(object), cls, fieldName);
+
+        if (reader.accept(TokenType.OBJECT_END)) {
+            reader.expect(TokenType.OBJECT_END);
+
+            return;
+        }
+
+        reader.expect(TokenType.COMMA);
+
+        deserializeObjectFields(object, classHierarchyMap, reader);
+    }
+
+    private void deserializeField(JsonReader reader, Object object, Class<?> cls, String fieldName) throws IOException, JsonProcessingException {
         try {
-            String fieldName = fieldNamesMap.get(fieldNameToken.getValue());
-
-            if (fieldName == null) {
-                return;
-            }
-
             Field field = cls.getDeclaredField(fieldName);
             field.setAccessible(true);
 
@@ -102,16 +121,6 @@ public class JsonBaseDeserializer {
                     field.set(object, value);
                 }
             }
-
-            if (reader.accept(TokenType.OBJECT_END)) {
-                reader.expect(TokenType.OBJECT_END);
-
-                return;
-            }
-
-            reader.expect(TokenType.COMMA);
-
-            deserializeObjectFields(object, fieldNamesMap, reader, cls);
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
@@ -536,8 +545,15 @@ public class JsonBaseDeserializer {
         return new ArrayList<>();
     }
 
-    private HashMap<String, String> buildFieldNamesMap(Class<?> cls) {
-        HashMap<String, String> map = new HashMap<>();
+    private HashMap<Class<?>, HashMap<String, String>> buildClassHierarchyMap(Class<?> cls) {
+        HashMap<Class<?>, HashMap<String, String>> map = new HashMap<>();
+
+        HashMap<String, String> fieldNames = new HashMap<>();
+
+        Class<?> superClass = cls.getSuperclass();
+        if (superClass != Object.class && superClass != null) {
+            map.putAll(buildClassHierarchyMap(superClass));
+        }
 
         Field[] fields = cls.getDeclaredFields();
 
@@ -545,17 +561,32 @@ public class JsonBaseDeserializer {
             field.setAccessible(true);
 
             if (!field.isAnnotationPresent(Json.class)) {
-                map.put(field.getName(), field.getName());
+                fieldNames.put(field.getName(), field.getName());
 
             } else {
                 Json json = field.getAnnotation(Json.class);
 
                 if (json.propertyName() != null && !json.propertyName().trim().equals("")) {
-                    map.put(json.propertyName(), field.getName());
+                    fieldNames.put(json.propertyName(), field.getName());
                 }
             }
         }
 
+        map.put(cls, fieldNames);
+
         return map;
+    }
+
+    private Class<?> getDeclaringClass(String fieldName, HashMap<Class<?>, HashMap<String, String>> map) {
+        Set<Class<?>> classes = map.keySet();
+
+        for (Class<?> cls: classes) {
+            HashMap<String, String> fieldNames = map.get(cls);
+            if (fieldNames.containsKey(fieldName)) {
+                return cls;
+            }
+        }
+
+        return null;
     }
 }
