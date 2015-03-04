@@ -2,6 +2,7 @@ package com.github.ftchirou.yajl.serializer;
 
 import com.github.ftchirou.yajl.annotations.JsonGetter;
 import com.github.ftchirou.yajl.annotations.Json;
+import com.github.ftchirou.yajl.annotations.JsonTypeInfo;
 import com.github.ftchirou.yajl.annotations.JsonValue;
 import com.github.ftchirou.yajl.io.JsonWriter;
 
@@ -88,11 +89,27 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
 
         writer.writeObjectStart();
 
-        List<Field> fields = nonIgnorableFields(cls.getDeclaredFields());
+        boolean isTypeInfoIncluded = includePolymorphicTypeInfo(cls, object, writer);
 
+        serializeObjectMembers(object, cls, writer, isTypeInfoIncluded);
+
+        writer.writeObjectEnd();
+    }
+
+    private void serializeObjectMembers(Object object, Class<?> cls, JsonWriter writer, boolean writeComma) throws IOException {
+        Class<?> superClass = cls.getSuperclass();
+        if (superClass != Object.class && superClass != null) {
+            serializeObjectMembers(superClass.cast(object), superClass, writer, writeComma);
+        }
+
+        List<Field> fields = nonIgnorableFields(cls);
         int length = fields.size();
 
         if (length > 0) {
+            if (writeComma) {
+                writer.writeComma();
+            }
+
             serializeField(object, fields.get(0), writer);
 
             for (int i = 1; i < length; ++i) {
@@ -102,8 +119,6 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
         }
 
         serializeMethodsMarkedAsGetters(object, cls.getDeclaredMethods(), writer);
-
-        writer.writeObjectEnd();
     }
 
     @SuppressWarnings("unchecked")
@@ -300,12 +315,66 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
         }
     }
 
-    private List<Field> nonIgnorableFields(Field[] fields) {
+    private boolean includePolymorphicTypeInfo(Class<?> cls, Object object, JsonWriter writer) throws IOException {
+        Class<?> parentClass = cls;
+        Class<?> superClass = cls;
+
+        while (parentClass != Object.class && parentClass != null) {
+            superClass = parentClass;
+            parentClass = parentClass.getSuperclass();
+        }
+
+        try {
+            if (superClass.isAnnotationPresent(JsonTypeInfo.class)) {
+                JsonTypeInfo typeInfo = superClass.getAnnotation(JsonTypeInfo.class);
+
+                if (typeInfo != null) {
+                    JsonTypeInfo.Id use = typeInfo.use();
+                    String property = typeInfo.property();
+
+                    switch (use) {
+                        case CLASS:
+                            writer.writeField(property, cls.getCanonicalName());
+                            return true;
+
+                        case CUSTOM:
+                            Field field = superClass.getDeclaredField(property);
+                            if (field != null) {
+                                field.setAccessible(true);
+
+                                writer.writeField(property, field.get(object).toString());
+                            }
+                            return true;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    private List<Field> nonIgnorableFields(Class<?> cls) {
+        JsonTypeInfo typeInfo = getCustomTypeInfo(cls);
+
+        Field[] fields = cls.getDeclaredFields();
+
         List<Field> list = new ArrayList<>();
 
         for (Field field : fields) {
             if (!isMarkedAsIgnorable(field)) {
-                list.add(field);
+                if (typeInfo == null) {
+                    list.add(field);
+
+                } else {
+                    if (!field.getName().equals(typeInfo.property())) {
+                        list.add(field);
+                    }
+                }
             }
         }
 
@@ -322,5 +391,17 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
         }
 
         return false;
+    }
+
+    private JsonTypeInfo getCustomTypeInfo(Class<?> cls) {
+        if (cls.isAnnotationPresent(JsonTypeInfo.class)) {
+            JsonTypeInfo typeInfo = cls.getAnnotation(JsonTypeInfo.class);
+
+            if (typeInfo.use() == JsonTypeInfo.Id.CUSTOM) {
+                return typeInfo;
+            }
+        }
+
+        return null;
     }
 }

@@ -6,4 +6,5 @@ out/
 *.ipr
 *.iws
 src/main/java/Main.java
-src/main/java/Person.java
+src/main/java/com/github/ftchirou/yajl/Person.java
+src/main/java/com/github/ftchirou/yajl/Employer.java

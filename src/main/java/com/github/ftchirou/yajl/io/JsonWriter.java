@@ -1,6 +1,5 @@
 package com.github.ftchirou.yajl.io;
 
-
 import com.github.ftchirou.yajl.json.JsonNode;
 
 import java.io.IOException;
