@@ -1,7 +1,6 @@
 package com.github.ftchirou.yajl.deserializer;
 
-import com.github.ftchirou.yajl.annotations.Json;
-import com.github.ftchirou.yajl.annotations.JsonValue;
+import com.github.ftchirou.yajl.annotations.*;
 import com.github.ftchirou.yajl.io.JsonReader;
 import com.github.ftchirou.yajl.lexer.JsonToken;
 import com.github.ftchirou.yajl.lexer.TokenType;
@@ -12,10 +11,7 @@ import com.github.ftchirou.yajl.type.MapType;
 import com.github.ftchirou.yajl.type.TypeLiteral;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -46,29 +42,23 @@ public class JsonBaseDeserializer {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <T> T deserializeObject(JsonReader reader, Class<T> cls) throws IOException, JsonProcessingException {
-        try {
-            T object = cls.newInstance();
+        reader.expect(TokenType.OBJECT_START);
 
-            reader.expect(TokenType.OBJECT_START);
+        T object = instantiateObject(cls, reader);
 
-            if (reader.accept(TokenType.OBJECT_END)) {
-                reader.expect(TokenType.OBJECT_END);
-
-                return object;
-            }
-
-            HashMap<Class<?>, HashMap<String, String>> classHierarchyMap = buildClassHierarchyMap(cls);
-
-            deserializeObjectFields(object, classHierarchyMap, reader);
+        if (reader.accept(TokenType.OBJECT_END)) {
+            reader.expect(TokenType.OBJECT_END);
 
             return object;
-
-        } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-
-            throw new JsonProcessingException(e);
         }
+
+        HashMap<Class<?>, HashMap<String, String>> classHierarchyMap = buildClassHierarchyMap(object.getClass());
+
+        deserializeObjectFields(object, classHierarchyMap, reader);
+
+        return object;
     }
 
     private void deserializeObjectFields(Object object, HashMap<Class<?>, HashMap<String, String>> classHierarchyMap, JsonReader reader) throws IOException, JsonProcessingException {
@@ -551,6 +541,7 @@ public class JsonBaseDeserializer {
         HashMap<String, String> fieldNames = new HashMap<>();
 
         Class<?> superClass = cls.getSuperclass();
+
         if (superClass != Object.class && superClass != null) {
             map.putAll(buildClassHierarchyMap(superClass));
         }
@@ -577,6 +568,61 @@ public class JsonBaseDeserializer {
         return map;
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> T instantiateObject(Class<?> cls, JsonReader reader) throws IOException, JsonProcessingException {
+        try {
+            int mod = cls.getModifiers();
+
+            if (!(Modifier.isAbstract(mod) || Modifier.isInterface(mod))) {
+                return (T) cls.newInstance();
+            }
+
+            if (cls.isAnnotationPresent(JsonTypeInfo.class)) {
+                T object = null;
+
+                JsonTypeInfo typeInfo = cls.getAnnotation(JsonTypeInfo.class);
+
+                String typeProperty = deserializeString(reader);
+                reader.expect(TokenType.COLON);
+                String typeId = deserializeString(reader);
+
+                if (typeInfo.use() == JsonTypeInfo.Id.CLASS) {
+                    object = (T) Class.forName(typeId).newInstance();
+
+                } else if (typeInfo.use() == JsonTypeInfo.Id.CUSTOM) {
+                    if (!typeProperty.equals(typeInfo.property())) {
+                        throw new JsonProcessingException("cannot find type info property '" + typeInfo.property() + "' at the beginning of the object.");
+                    }
+
+                    JsonTypes types = getTypes(cls);
+
+                    if (types != null) {
+                        Class<?> c = getTypeValue(types, typeId);
+
+                        if (c == null) {
+                            throw new JsonProcessingException("cannot instantiate object of type '" + cls.getName() + "'");
+                        }
+
+                        object = (T) c.newInstance();
+                    }
+                }
+
+                if (reader.accept(TokenType.COMMA)) {
+                    reader.expect(TokenType.COMMA);
+                }
+
+                return object;
+            }
+
+            throw new JsonProcessingException("cannot instantiate object of type '" + cls.getName() + "'");
+
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            e.printStackTrace();
+
+            throw new JsonProcessingException(e);
+        }
+    }
+
     private Class<?> getDeclaringClass(String fieldName, HashMap<Class<?>, HashMap<String, String>> map) {
         Set<Class<?>> classes = map.keySet();
 
@@ -584,6 +630,32 @@ public class JsonBaseDeserializer {
             HashMap<String, String> fieldNames = map.get(cls);
             if (fieldNames.containsKey(fieldName)) {
                 return cls;
+            }
+        }
+
+        return null;
+    }
+
+    private JsonTypes getTypes(Class<?> cls) {
+        Class<?> parentClass = cls;
+        Class<?> superClass = cls;
+
+        while (parentClass != Object.class && parentClass != null) {
+            superClass = parentClass;
+            parentClass = parentClass.getSuperclass();
+        }
+
+        if (superClass.isAnnotationPresent(JsonTypes.class)) {
+            return superClass.getAnnotation(JsonTypes.class);
+        }
+
+        return null;
+    }
+
+    private Class<?> getTypeValue(JsonTypes types, String typeId) {
+        for (JsonType type: types.value()) {
+            if (type.id().equals(typeId)) {
+                return type.value();
             }
         }
 

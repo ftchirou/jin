@@ -1,3 +1,4 @@
+.DS_Store
 .gradle/
 .idea/
 build/
@@ -5,6 +6,7 @@ out/
 *.iml
 *.ipr
 *.iws
-src/main/java/Main.java
-src/main/java/com/github/ftchirou/yajl/Person.java
-src/main/java/com/github/ftchirou/yajl/Employer.java
+Main.java
+Entity.java
+Person.java
+Employer.java
