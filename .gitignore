@@ -6,7 +6,3 @@ out/
 *.iml
 *.ipr
 *.iws
-Main.java
-Entity.java
-Person.java
-Employer.java
