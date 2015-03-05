@@ -1,4 +1,4 @@
-import com.github.ftchirou.yajl.Json;
+import jin.Json;
 
 import java.io.File;
 import java.util.Arrays;
