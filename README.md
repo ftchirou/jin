@@ -11,8 +11,8 @@ Jin is a lightweight library for processing JSON in Java. It uses a streaming AP
 
 #### Databind
 
-##### Serialization
-###### Basic serialization
+##### Basic Serialization
+###### Primitives, array, list and map serialization
 Just pass the object or the primitive to be serialized to one of the static methods ```Json.toJson(...)```.
 ```java
 
@@ -99,7 +99,7 @@ public class Main {
 
 You can control how the object members are translated in JSON with annotations.
 
-* We can specify the JSON property name of a member by annotating the member with ```@Json(property="<property_name>")```.
+* To specify the JSON property name of a member, annotate it with ```@Json(property="<property_name>")```.
   
   Example
 
@@ -160,3 +160,116 @@ You can control how the object members are translated in JSON with annotations.
  Json.toJson(new Person("John", "Doe", Person.Gender.MALE, 25); 
  // => "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"gender\":\"XY\",\"age\":25}"
  ```
+ 
+##### Basic Deserialization
+
+###### Primitives deserialization
+
+Use one of the static methods ```Json.fromJson(...)```.
+
+Example
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        int aInt = Json.fromJson("42");
+        double aDouble = Json.fromJson("4.31E-10");
+        String aString = Json.fromJson("\"hello\"");
+        boolean aBoolean = Json.fromJson("true");
+   }
+}
+````
+
+###### JSON Array deserialization
+
+By default, JSON arrays are deserialized in ```ArrayList<Object>```.
+
+Example
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        Collection integers = Json.fromJson("[13.7, 76, 98.12, 45.7]");
+        
+        assertThat(integers, intanceOf(ArrayList.class));
+        // => true
+        
+        assertThat(integers.get(0), instanceOf(Double.class));
+        // => true
+        
+        assertThat(integers.get(1), instanceOf(Integer.class));
+        // => true !!!!
+    }
+}
+```
+
+If you want a JSON array to be deserialized in a collection type other than ```ArrayList```, pass your type as the second argument to ```Json.fromJson()```.
+
+Example
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        Collection integers = Json.fromJson("[13.7, 76, 98.12, 45.7"], ArrayDeque.class);
+        
+        assertThat(integers, instanceOf(ArrayDeque.class);
+        // => true
+    }
+}
+```
+
+For even more control on how a JSON array should be deserialized and how the elements of the array should also be deserialized, pass an object of type ```CollectionType``` as the second argument to ```Json.fromJson(...)```.
+
+Example
+
+```java
+import jin.Json
+import jin.type.CollectionType;
+
+public class Main {
+    public static void main(String[] args) {
+        ArrayList<Double> list = Json.fromJson("[13.7, 76, 98.12, 45.7"], 
+            new CollectionType(ArrayList.class, Double.class));
+        
+        System.out.println(list);
+        // => [13.7, 76.0, 98.12, 45.7]
+        
+        assertThat(list.get(1), instanceOf(Double.class));
+        // => true !
+    }
+}
+```
+
+The constructor of the class ```CollectionType``` takes 2 arguments of type ```java.lang.reflect.Type```. The first is the type of the container (ArrayList, ArrayDeque, LinkedHashSet, ...) and the second is the type of each element.
+
+Now the fun part. ```CollectionType``` also implements ```java.lang.reflect.Type```. That means that we can have things like
+
+```java
+import jin.Json;
+import jin.type.CollectionType;
+
+public class Main {
+    public static void main(String[] args) {
+        List<Set<Integer>> list = Json.fromJson("[ [1, 2], [3, 4], [5, 6] ]",
+            new CollectionType(ArrayList.class,
+                new CollectionType(LinkedHashSet.class, Integer.class)));
+                
+        System.out.println(list);
+        // => [[1, 2], [3, 4], [5, 6]]
+        
+        assertThat(list, instanceOf(ArrayList.class));
+        // => true
+        
+        assertThat(list.get(0), instanceOf(LinkedHashSet.class));
+        // => true
+    }
+}
+```
+
+
