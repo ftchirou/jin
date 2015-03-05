@@ -2,10 +2,12 @@
 #### Simple and fast JSON processing.
 
 ### What Jin is ?
-Jin is a lightweight library for processing JSON in Java. It uses a streaming API for fast JSON processing and can be used in 2 modes
+Jin is a lightweight library for processing JSON in Java inspired by the [Jackson Project](https://github.com/FasterXML/jackson). It uses a streaming API for fast JSON processing and can be used in 2 modes
 
-* **Databind** Serialize or deserialize Java objects directly to or from a JSON stream. The stream can be a string, a file, a response from an HTTP request, basically any valid Java InputStream, OutputStream.
-* **In-memory tree representation** Construct a mutable in-memory tree representation from a JSON stream.
+* **Databind** Serialize or deserialize Java objects directly to or from a stream of JSON tokens. The stream can be a string, a file, a response from an HTTP request, basically any valid Java InputStream or OutputStream.
+* **In-memory tree representation** Construct a mutable in-memory tree representation from a stream of JSON tokens.
+
+The streaming API can also be used to write or read JSON tokens from a stream.
  
 ### Usage
 
