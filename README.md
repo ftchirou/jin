@@ -12,7 +12,8 @@ Jin is a lightweight library for processing JSON in Java. It uses a streaming AP
 #### Databind
 
 ##### Basic Serialization
-###### Primitives, array, list and map serialization
+
+###### Primitives, Array, Collection and Map serialization
 Just pass the object or the primitive to be serialized to one of the static methods ```Json.toJson(...)```.
 ```java
 
@@ -41,10 +42,10 @@ public class Main {
       String array = Json.toJson(new int[] {1, 2, 3, 4, 5}); 
       // => "[1,2,3,4,5]"
       
-      String list = Json.toJson(Arrays.asList("one", "two", "three", "four", "five")); 
+      String collection = Json.toJson(Arrays.asList("one", "two", "three", "four", "five")); 
       // => "[\"one\",\"two\",\"three\",\"four\",\"five\"]"
       
-      String mixedArray = Json.toJson(Arrays.asList(42, Double.valueOf(3.4d), true, Arrays.asList("one", "two", "three"), null)); 
+      String mixedCollection = Json.toJson(Arrays.asList(42, Double.valueOf(3.4d), true, Arrays.asList("one", "two", "three"), null)); 
       // => "[42,3.4,true,[\"one\",\"two\",\"three\"],null]"
           
       Map<String, Integer> map = new HashMap<>();
@@ -63,7 +64,7 @@ To write to a file use ```Json.toJson(Object, java.io.File)``` or use ```Json.to
 ###### POJO serialization
 To serialize a Plain Old Java Object, again, pass it to one of the static methods ```Json.toJson(...)```.
 
-````java
+```java
 public class Person {
     public enum Gender { MALE, FEMALE }
 
@@ -339,4 +340,144 @@ public class Main {
 }
 ```
 
+###### POJO deserialization
+
+To deserialize a JSON object into a POJO:
+
+* Declare an empty constructor (if not already done) in the class of the POJO, so that Jin could create instances of it.
+* Pass the type of the POJO as the second argument to ```Json.toJson(...)```.
+
+Example
+
+```java
+public class Person {
+    public enum Gender { MALE, FEMALE }
+
+    private String firstName;
+
+    private String lastName;
+
+    private int age;
+
+    public Person() {
+    }
+
+    public Person(String firstName, String lastName, int age) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.age = age;
+    }
+    
+    ...
+}
+```
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        Person person = Json.fromJson("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"gender\":\"MALE\",\"age\":25}", Person.class);
+        
+        assertEquals("John", person.getFirstName());
+        // => true
+        
+        assertEquals("Doe", person.getLastName());
+        // => true
+        
+        assertEquals(Person.Gender.MALE, person.getGender());
+        // => true
+        
+        assertEquals(25, person.getAge);
+        // => true
+    }
+}
+```
+
+If the POJO was annotated with ```@Json``` and/or ```@JsonValue``` annotations, the deserialization process will take that into account.
+
+
+##### Advanced serialization and deserialization
+
+###### Custom serializers and deserializers
+
+To override the behavior of the default serializer/deserializer for an object field:
+
+* Extend the abstract class ```jin.databind.JsonSerializer<T>``` / ```jin.databind.JsonDeserializer<T>``` and implement the method ```void serialize(T, JsonWriter writer)``` / ```T deserialize(JsonReader reader)```.
+* Annotate the field with ```@Json(serializeWith=MyCustomSerializer.class, deserializeWith=MyCustomDeserializer.class)```.
+
+Example
+
+```java
+public class Person {
+    public enum Gender { MALE, FEMALE }
+
+    private String firstName;
+
+    private String lastName;
+
+    @Json(serializeWith=DateTimeSerializer.class, deserializeWith=DateTimeDeserializer.class)
+    private org.joda.DateTime birthDate
+
+    public Person() {
+    }
+
+    public Person(String firstName, String lastName, org.joda.DateTime birthDate) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthDate = birthDate;
+    }
+    
+    ...
+}
+```
+
+```java
+import jin.databind.JsonSerializer;
+import jin.io.JsonWriter;
+import org.joda.time.DateTime;
+
+import java.io.IOException;
+
+public class DateTimeSerializer extends JsonSerializer<DateTime> {
+
+    public void serialize(DateTime dt, JsonWriter writer) throws IOException {
+        writer.writeString(dt.toString());
+    }
+}
+```
+
+```java
+import jin.databind.JsonDeserializer;
+import jin.io.JsonReader;
+import jin.io.JsonToken;
+import jin.io.TokenType;
+import jin.io.JsonProcessingException;
+import org.joda.time.DateTime;
+
+import java.io.IOException;
+
+public class DateTimeDeserializer extends JsonDeserializer<DateTime> {
+
+    public DateTime deserialize(JsonReader reader) throws IOException, JsonProcessingException {
+        JsonToken token = reader.expect(TokenType.STRING);
+
+        return DateTime.parse(token.getValue());
+    }
+}
+```
+
+```java
+import jin.Json;
+import org.joda.DateTime;
+
+public class Main {
+    public static void main(String[] args) {
+        Person person = new Person("John", "Doe", new DateTime(1989, 4, 8, 15, 15);
+        
+        String json = Json.toJson(person);
+        // => "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1989-04-08T15:15:00.000Z\"}"
+    }
+}
+```
 
