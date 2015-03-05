@@ -1,4 +1,4 @@
-package jin.pojo;
+package jin.databind.tests.pojo;
 
 public class BooleanField2 extends FieldWithCustomTypeInfo {
 

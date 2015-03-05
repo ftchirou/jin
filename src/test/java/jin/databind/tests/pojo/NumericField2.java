@@ -1,4 +1,4 @@
-package jin.pojo;
+package jin.databind.tests.pojo;
 
 public class NumericField2 extends FieldWithCustomTypeInfo {
     private int value;

@@ -1,29 +1,31 @@
-package jin.pojo;
+package jin.databind.tests.pojo;
+
+import jin.annotations.Json;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PersonWithEnum {
-    public enum Gender { MALE, FEMALE }
+public class PersonWithDefinedPropertyNames {
 
+    @Json(propertyName="first_name")
     private String firstName;
 
+    @Json(propertyName="last_name")
     private String lastName;
 
-    private Gender gender;
-
+    @Json(propertyName="AGE")
     private int age;
 
+    @Json(propertyName="FRIENDS")
     private List<String> friends;
 
-    public PersonWithEnum() {
+    public PersonWithDefinedPropertyNames() {
         this.friends = new ArrayList<>();
     }
 
-    public PersonWithEnum(String firstName, String lastName, Gender gender, int age, List<String> friends) {
+    public PersonWithDefinedPropertyNames(String firstName, String lastName, int age, List<String> friends) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.gender = gender;
         this.age = age;
         this.friends = friends;
     }
@@ -42,14 +44,6 @@ public class PersonWithEnum {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
     }
 
     public int getAge() {

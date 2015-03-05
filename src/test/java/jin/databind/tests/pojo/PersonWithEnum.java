@@ -1,31 +1,30 @@
-package jin.pojo;
-
-import jin.annotations.Json;
-import jin.databind.tests.DateTimeDeserializer;
-import jin.databind.tests.DateTimeSerializer;
-import org.joda.time.DateTime;
+package jin.databind.tests.pojo;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PersonWithCustomSerializerAndDeserializer {
+public class PersonWithEnum {
+    public enum Gender { MALE, FEMALE }
+
     private String firstName;
 
     private String lastName;
 
-    @Json(serializeWith=DateTimeSerializer.class, deserializeWith=DateTimeDeserializer.class)
-    private DateTime birthDate;
+    private Gender gender;
+
+    private int age;
 
     private List<String> friends;
 
-    public PersonWithCustomSerializerAndDeserializer() {
+    public PersonWithEnum() {
         this.friends = new ArrayList<>();
     }
 
-    public PersonWithCustomSerializerAndDeserializer(String firstName, String lastName, DateTime birthDate, List<String> friends) {
+    public PersonWithEnum(String firstName, String lastName, Gender gender, int age, List<String> friends) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.birthDate = birthDate;
+        this.gender = gender;
+        this.age = age;
         this.friends = friends;
     }
 
@@ -45,12 +44,20 @@ public class PersonWithCustomSerializerAndDeserializer {
         this.lastName = lastName;
     }
 
-    public DateTime getBirthDate() {
-        return birthDate;
+    public Gender getGender() {
+        return gender;
     }
 
-    public void setBirthDate(DateTime birthDate) {
-        this.birthDate = birthDate;
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
     }
 
     public List<String> getFriends() {

@@ -3,7 +3,7 @@ package jin.databind.tests;
 import jin.databind.JsonBaseDeserializer;
 import jin.io.JsonReader;
 import jin.io.JsonProcessingException;
-import jin.pojo.*;
+import jin.databind.tests.pojo.*;
 import jin.type.CollectionType;
 import jin.type.MapType;
 import org.junit.Test;
@@ -380,7 +380,7 @@ public class JsonBaseDeserializerTest {
 
         JsonReader reader;
 
-        reader = new JsonReader("{\"@class\":\"jin.pojo.StringField\",\"value\":\"hello\"}");
+        reader = new JsonReader("{\"@class\":\"jin.databind.tests.pojo.StringField\",\"value\":\"hello\"}");
         Field stringField = deserializer.deserialize(reader, Field.class);
 
         assertThat(stringField, instanceOf(StringField.class));
@@ -388,7 +388,7 @@ public class JsonBaseDeserializerTest {
 
         reader.close();
 
-        reader = new JsonReader("{\"@class\":\"jin.pojo.NumericField\",\"value\":42}");
+        reader = new JsonReader("{\"@class\":\"jin.databind.tests.pojo.NumericField\",\"value\":42}");
         Field numericField = deserializer.deserialize(reader, Field.class);
 
         assertThat(numericField, instanceOf(NumericField.class));
@@ -396,7 +396,7 @@ public class JsonBaseDeserializerTest {
 
         reader.close();
 
-        reader = new JsonReader("{\"@class\":\"jin.pojo.BooleanField\",\"value\":true}");
+        reader = new JsonReader("{\"@class\":\"jin.databind.tests.pojo.BooleanField\",\"value\":true}");
         Field booleanField = deserializer.deserialize(reader, Field.class);
 
         assertThat(booleanField, instanceOf(BooleanField.class));
@@ -439,7 +439,7 @@ public class JsonBaseDeserializerTest {
     @Test
     public void deserializePOJOWithArrayOfPolymorphicObjects() throws IOException, JsonProcessingException {
         JsonBaseDeserializer deserializer = new JsonBaseDeserializer();
-        JsonReader reader = new JsonReader("{\"@class\":\"jin.pojo.ArrayField\",\"fields\":[{\"@class\":\"jin.pojo.StringField\",\"value\":\"hello\"},{\"@class\":\"jin.pojo.NumericField\",\"value\":42},{\"@class\":\"jin.pojo.BooleanField\",\"value\":true}]}");
+        JsonReader reader = new JsonReader("{\"@class\":\"jin.databind.tests.pojo.ArrayField\",\"fields\":[{\"@class\":\"jin.databind.tests.pojo.StringField\",\"value\":\"hello\"},{\"@class\":\"jin.databind.tests.pojo.NumericField\",\"value\":42},{\"@class\":\"jin.databind.tests.pojo.BooleanField\",\"value\":true}]}");
 
         Field field = deserializer.deserialize(reader, Field.class);
 

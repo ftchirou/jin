@@ -1,4 +1,4 @@
-package jin.pojo;
+package jin.databind.tests.pojo;
 
 import java.util.ArrayList;
 import java.util.List;

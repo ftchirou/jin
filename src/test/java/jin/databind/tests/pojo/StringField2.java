@@ -1,4 +1,4 @@
-package jin.pojo;
+package jin.databind.tests.pojo;
 
 public class StringField2 extends FieldWithCustomTypeInfo {
     private String value;

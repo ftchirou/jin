@@ -1,32 +1,31 @@
-package jin.pojo;
+package jin.databind.tests.pojo;
 
 import jin.annotations.Json;
+import jin.databind.tests.DateTimeDeserializer;
+import jin.databind.tests.DateTimeSerializer;
+import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PersonWithDefinedPropertyNames {
-
-    @Json(propertyName="first_name")
+public class PersonWithCustomSerializerAndDeserializer {
     private String firstName;
 
-    @Json(propertyName="last_name")
     private String lastName;
 
-    @Json(propertyName="AGE")
-    private int age;
+    @Json(serializeWith=DateTimeSerializer.class, deserializeWith=DateTimeDeserializer.class)
+    private DateTime birthDate;
 
-    @Json(propertyName="FRIENDS")
     private List<String> friends;
 
-    public PersonWithDefinedPropertyNames() {
+    public PersonWithCustomSerializerAndDeserializer() {
         this.friends = new ArrayList<>();
     }
 
-    public PersonWithDefinedPropertyNames(String firstName, String lastName, int age, List<String> friends) {
+    public PersonWithCustomSerializerAndDeserializer(String firstName, String lastName, DateTime birthDate, List<String> friends) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.age = age;
+        this.birthDate = birthDate;
         this.friends = friends;
     }
 
@@ -46,12 +45,12 @@ public class PersonWithDefinedPropertyNames {
         this.lastName = lastName;
     }
 
-    public int getAge() {
-        return age;
+    public DateTime getBirthDate() {
+        return birthDate;
     }
 
-    public void setAge(int age) {
-        this.age = age;
+    public void setBirthDate(DateTime birthDate) {
+        this.birthDate = birthDate;
     }
 
     public List<String> getFriends() {

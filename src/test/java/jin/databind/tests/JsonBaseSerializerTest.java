@@ -2,7 +2,7 @@ package jin.databind.tests;
 
 import jin.databind.JsonBaseSerializer;
 import jin.io.JsonWriter;
-import jin.pojo.*;
+import jin.databind.tests.pojo.*;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -112,9 +112,9 @@ public class JsonBaseSerializerTest {
         NumericField numericField = new NumericField(42);
         BooleanField booleanField = new BooleanField(true);
 
-        assertEquals("{\"@class\":\"jin.pojo.StringField\",\"value\":\"hello\"}", JsonSerializer.serialize(stringField));
-        assertEquals("{\"@class\":\"jin.pojo.NumericField\",\"value\":42}", JsonSerializer.serialize(numericField));
-        assertEquals("{\"@class\":\"jin.pojo.BooleanField\",\"value\":true}", JsonSerializer.serialize(booleanField));
+        assertEquals("{\"@class\":\"jin.databind.tests.pojo.StringField\",\"value\":\"hello\"}", JsonSerializer.serialize(stringField));
+        assertEquals("{\"@class\":\"jin.databind.tests.pojo.NumericField\",\"value\":42}", JsonSerializer.serialize(numericField));
+        assertEquals("{\"@class\":\"jin.databind.tests.pojo.BooleanField\",\"value\":true}", JsonSerializer.serialize(booleanField));
     }
 
     @Test
@@ -136,7 +136,7 @@ public class JsonBaseSerializerTest {
                 new BooleanField(true)
         ));
 
-        assertEquals("{\"@class\":\"jin.pojo.ArrayField\",\"fields\":[{\"@class\":\"jin.pojo.StringField\",\"value\":\"hello\"},{\"@class\":\"jin.pojo.NumericField\",\"value\":42},{\"@class\":\"jin.pojo.BooleanField\",\"value\":true}]}", JsonSerializer.serialize(arrayField));
+        assertEquals("{\"@class\":\"jin.databind.tests.pojo.ArrayField\",\"fields\":[{\"@class\":\"jin.databind.tests.pojo.StringField\",\"value\":\"hello\"},{\"@class\":\"jin.databind.tests.pojo.NumericField\",\"value\":42},{\"@class\":\"jin.databind.tests.pojo.BooleanField\",\"value\":true}]}", JsonSerializer.serialize(arrayField));
     }
 
     static class JsonSerializer {

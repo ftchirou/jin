@@ -1,37 +1,27 @@
-package jin.pojo;
-
-import jin.annotations.Json;
-import jin.annotations.JsonGetter;
-import org.joda.time.DateTime;
-import org.joda.time.Years;
+package jin.databind.tests.pojo;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PersonWithIgnoredPropertyAndGetter {
+public class Person {
+
     private String firstName;
 
     private String lastName;
 
-    @Json(ignore=true)
-    private DateTime birthDate;
+    private int age;
 
     private List<String> friends;
 
-    public PersonWithIgnoredPropertyAndGetter() {
+    public Person() {
         this.friends = new ArrayList<>();
     }
 
-    public PersonWithIgnoredPropertyAndGetter(String firstName, String lastName, DateTime birthDate, List<String> friends) {
+    public Person(String firstName, String lastName, int age, List<String> friends) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.birthDate = birthDate;
+        this.age = age;
         this.friends = friends;
-    }
-
-    @JsonGetter(name="age")
-    public int getAge() {
-        return Years.yearsBetween(birthDate, DateTime.now()).getYears();
     }
 
     public String getFirstName() {
@@ -50,12 +40,12 @@ public class PersonWithIgnoredPropertyAndGetter {
         this.lastName = lastName;
     }
 
-    public DateTime getBirthDate() {
-        return birthDate;
+    public int getAge() {
+        return age;
     }
 
-    public void setBirthDate(DateTime birthDate) {
-        this.birthDate = birthDate;
+    public void setAge(int age) {
+        this.age = age;
     }
 
     public List<String> getFriends() {
