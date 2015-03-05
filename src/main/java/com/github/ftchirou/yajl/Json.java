@@ -19,6 +19,17 @@ public class Json {
         return fromJson(file, null);
     }
 
+    public static String toJson(Object object) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        toJson(object, baos);
+
+        return baos.toString("UTF-8");
+    }
+
+    public static void toJson(Object object, File file) throws IOException {
+        toJson(object, new FileOutputStream(file));
+    }
+
     public static <T> T fromJson(String json, Class<T> cls) throws IOException, JsonProcessingException {
         JsonBaseDeserializer deserializer = new JsonBaseDeserializer();
         JsonReader reader = new JsonReader(json);
@@ -55,27 +66,6 @@ public class Json {
         reader.close();
 
         return object;
-    }
-
-    public static String toJson(Object object) throws IOException {
-        JsonBaseSerializer serializer = new JsonBaseSerializer();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        JsonWriter writer = new JsonWriter(baos);
-
-        serializer.serialize(object, writer);
-
-        writer.flush();
-
-        String json = baos.toString("UTF-8");
-
-        writer.close();
-
-        return json;
-    }
-
-    public static void toJson(Object object, File file) throws IOException {
-        toJson(object, new FileOutputStream(file));
     }
 
     public static void toJson(Object object, OutputStream os) throws IOException {
