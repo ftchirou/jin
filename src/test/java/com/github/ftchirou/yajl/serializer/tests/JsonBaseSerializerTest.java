@@ -1,13 +1,9 @@
 package com.github.ftchirou.yajl.serializer.tests;
 
-import com.github.ftchirou.yajl.annotations.JsonGetter;
-import com.github.ftchirou.yajl.annotations.Json;
-import com.github.ftchirou.yajl.annotations.JsonValue;
+import com.github.ftchirou.yajl.pojo.*;
 import com.github.ftchirou.yajl.serializer.JsonBaseSerializer;
 import com.github.ftchirou.yajl.io.JsonWriter;
 import org.joda.time.DateTime;
-import org.joda.time.Years;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -16,7 +12,6 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore
 public class JsonBaseSerializerTest {
 
     @Test
@@ -64,78 +59,85 @@ public class JsonBaseSerializerTest {
 
     @Test
     public void serializeSimplePOJO() throws IOException {
-        POJO pojo = new POJO("John", "Doe", 25, POJO.Gender.MALE, Arrays.asList("Jane", "Jill", "Helen"));
+        Person person = new Person("John", "Doe", 25, Arrays.asList("Jane", "Jill", "Helen"));
 
-        assertEquals("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":25,\"gender\":\"MALE\",\"friends\":[\"Jane\",\"Jill\",\"Helen\"]}",
-                JsonSerializer.serialize(pojo));
+        assertEquals("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":25,\"friends\":[\"Jane\",\"Jill\",\"Helen\"]}", JsonSerializer.serialize(person));
     }
 
     @Test
-    public void serializePOJOWithAnnotations() throws IOException {
-        POJOWithAnnotations pojo = new POJOWithAnnotations("John", "Doe", new DateTime(1989, 4, 8, 15, 15), POJOWithAnnotations.Gender.MALE, Arrays.asList("Jane", "Jill", "Helen"));
+    public void serializePOJOWithEnum() throws IOException {
+        PersonWithEnum person = new PersonWithEnum("John", "Doe", PersonWithEnum.Gender.MALE, 25, Arrays.asList("Jane", "Jill", "Helen"));
 
-        assertEquals("{\"first_name\":\"John\",\"last_name\":\"Doe\",\"birth_date\":\"1989-04-08T15:15:00.000Z\",\"gender\":\"male\",\"friends\":[\"Jane\",\"Jill\",\"Helen\"],\"age\":25}",
-                JsonSerializer.serialize(pojo));
+        assertEquals("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"gender\":\"MALE\",\"age\":25,\"friends\":[\"Jane\",\"Jill\",\"Helen\"]}", JsonSerializer.serialize(person));
     }
 
-    static class POJO {
-        public enum Gender { MALE, FEMALE };
+    @Test
+    public void serializePOJOWithDefinedValueForEnumConstant() throws IOException {
+        PersonWithDefinedValueForEnumConstant person = new PersonWithDefinedValueForEnumConstant("John", "Doe", PersonWithDefinedValueForEnumConstant.Gender.MALE, 25, Arrays.asList("Jane", "Jill", "Helen"));
 
-        private String firstName;
-
-        private String lastName;
-
-        private int age;
-
-        private Gender gender;
-
-        private List<String> friends;
-
-        public POJO(String firstName, String lastName, int age, Gender gender, List<String> friends) {
-            this.firstName = firstName;
-            this.lastName = lastName;
-            this.age = age;
-            this.gender = gender;
-            this.friends = friends;
-        }
+        assertEquals("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"gender\":\"male\",\"age\":25,\"friends\":[\"Jane\",\"Jill\",\"Helen\"]}", JsonSerializer.serialize(person));
     }
 
-    static class POJOWithAnnotations {
-        public enum Gender {
-            @JsonValue("male")
-            MALE,
+    @Test
+    public void serializePOJOWithDefinedPropertyNames() throws IOException {
+        PersonWithDefinedPropertyNames person = new PersonWithDefinedPropertyNames("John", "Doe", 25, Arrays.asList("Jane", "Jill", "Helen"));
 
-            @JsonValue("female")
-            FEMALE
-        }
-
-        @Json(propertyName="first_name")
-        private String firstName;
-
-        @Json(propertyName="last_name")
-        private String lastName;
-
-        @Json(propertyName="birth_date", serializeWith=DateTimeSerializer.class)
-        private DateTime birthDate;
-
-        private Gender gender;
-
-        private List<String> friends;
-
-        public POJOWithAnnotations(String firstName, String lastName, DateTime birthDate, Gender gender, List<String> friends) {
-            this.firstName = firstName;
-            this.lastName = lastName;
-            this.birthDate = birthDate;
-            this.gender = gender;
-            this.friends = friends;
-        }
-
-        @JsonGetter(name="age")
-        public int getAge() {
-            return Years.yearsBetween(birthDate, DateTime.now()).getYears();
-        }
+        assertEquals("{\"first_name\":\"John\",\"last_name\":\"Doe\",\"AGE\":25,\"FRIENDS\":[\"Jane\",\"Jill\",\"Helen\"]}", JsonSerializer.serialize(person));
     }
 
+    @Test
+    public void serializePOJOWithIgnoredPropertyAndGetter() throws IOException {
+        PersonWithIgnoredPropertyAndGetter person = new PersonWithIgnoredPropertyAndGetter("John", "Doe", new DateTime(1989, 4, 8, 15, 15), Arrays.asList("Jane", "Jill", "Helen"));
+
+        assertEquals("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"friends\":[\"Jane\",\"Jill\",\"Helen\"],\"age\":25}", JsonSerializer.serialize(person));
+    }
+
+    @Test
+    public void serializePOJOWithCustomSerializer() throws IOException {
+        PersonWithCustomSerializerAndDeserializer person = new PersonWithCustomSerializerAndDeserializer("John", "Doe", new DateTime(1989, 4, 8, 15, 15), Arrays.asList("Jane", "Jill", "Helen"));
+
+        assertEquals("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1989-04-08T15:15:00.000Z\",\"friends\":[\"Jane\",\"Jill\",\"Helen\"]}", JsonSerializer.serialize(person));
+    }
+
+    @Test
+    public void serializePOJOWithInheritedFields() throws IOException {
+        Employee employee = new Employee("John", "Doe", 25, Arrays.asList("Jane", "Jill", "Helen"), "Pythagoras Afrique");
+
+        assertEquals("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":25,\"friends\":[\"Jane\",\"Jill\",\"Helen\"],\"employerName\":\"Pythagoras Afrique\"}", JsonSerializer.serialize(employee));
+    }
+
+    @Test
+    public void serializePolymorphicPOJOWithClassTypeInfo() throws IOException {
+        StringField stringField = new StringField("hello");
+        NumericField numericField = new NumericField(42);
+        BooleanField booleanField = new BooleanField(true);
+
+        assertEquals("{\"@class\":\"com.github.ftchirou.yajl.pojo.StringField\",\"value\":\"hello\"}", JsonSerializer.serialize(stringField));
+        assertEquals("{\"@class\":\"com.github.ftchirou.yajl.pojo.NumericField\",\"value\":42}", JsonSerializer.serialize(numericField));
+        assertEquals("{\"@class\":\"com.github.ftchirou.yajl.pojo.BooleanField\",\"value\":true}", JsonSerializer.serialize(booleanField));
+    }
+
+    @Test
+    public void serializePolymorphicPOJOWithCustomTypeInfo() throws IOException {
+        StringField2 stringField2 = new StringField2("hello");
+        NumericField2 numericField2 = new NumericField2(42);
+        BooleanField2 booleanField2 = new BooleanField2(false);
+
+        assertEquals("{\"type\":\"string\",\"value\":\"hello\"}", JsonSerializer.serialize(stringField2));
+        assertEquals("{\"type\":\"numeric\",\"value\":42}", JsonSerializer.serialize(numericField2));
+        assertEquals("{\"type\":\"boolean\",\"value\":false}", JsonSerializer.serialize(booleanField2));
+    }
+
+    @Test
+    public void serializePOJOWithArrayOfPolymorphicObjects() throws IOException {
+        ArrayField arrayField = new ArrayField(Arrays.asList(
+                new StringField("hello"),
+                new NumericField(42),
+                new BooleanField(true)
+        ));
+
+        assertEquals("{\"@class\":\"com.github.ftchirou.yajl.pojo.ArrayField\",\"fields\":[{\"@class\":\"com.github.ftchirou.yajl.pojo.StringField\",\"value\":\"hello\"},{\"@class\":\"com.github.ftchirou.yajl.pojo.NumericField\",\"value\":42},{\"@class\":\"com.github.ftchirou.yajl.pojo.BooleanField\",\"value\":true}]}", JsonSerializer.serialize(arrayField));
+    }
 
     static class JsonSerializer {
 

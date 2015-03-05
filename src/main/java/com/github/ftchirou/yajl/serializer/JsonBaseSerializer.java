@@ -96,17 +96,19 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
         writer.writeObjectEnd();
     }
 
-    private void serializeObjectMembers(Object object, Class<?> cls, JsonWriter writer, boolean writeComma) throws IOException {
+    private int serializeObjectMembers(Object object, Class<?> cls, JsonWriter writer, boolean writeComma) throws IOException {
+        int serializedInSuperClass = 0;
+
         Class<?> superClass = cls.getSuperclass();
         if (superClass != Object.class && superClass != null) {
-            serializeObjectMembers(superClass.cast(object), superClass, writer, writeComma);
+            serializedInSuperClass = serializeObjectMembers(superClass.cast(object), superClass, writer, writeComma);
         }
 
         List<Field> fields = nonIgnorableFields(cls);
         int length = fields.size();
 
         if (length > 0) {
-            if (writeComma) {
+            if (writeComma || serializedInSuperClass > 0) {
                 writer.writeComma();
             }
 
@@ -118,7 +120,7 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
             }
         }
 
-        serializeMethodsMarkedAsGetters(object, cls.getDeclaredMethods(), writer);
+        return length + serializeMethodsMarkedAsGetters(object, cls.getDeclaredMethods(), writer);
     }
 
     @SuppressWarnings("unchecked")
@@ -241,7 +243,9 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private void serializeMethodsMarkedAsGetters(Object object, Method[] methods, JsonWriter writer) throws IOException {
+    private int serializeMethodsMarkedAsGetters(Object object, Method[] methods, JsonWriter writer) throws IOException {
+        int count = 0;
+
         for (Method method : methods) {
             method.setAccessible(true);
 
@@ -280,11 +284,14 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
 
             try {
                 serializer.serialize(method.invoke(object), writer);
+                count++;
 
             } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
+
+        return count;
     }
 
     private void serializePrimitive(Object element, JsonWriter writer) throws IOException {

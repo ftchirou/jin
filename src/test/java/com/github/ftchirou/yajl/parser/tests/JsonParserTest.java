@@ -1,4 +1,4 @@
-package com.github.ftchirou.yajll.parser.tests;
+package com.github.ftchirou.yajl.parser.tests;
 
 import com.github.ftchirou.yajl.json.*;
 import com.github.ftchirou.yajl.parser.JsonParser;

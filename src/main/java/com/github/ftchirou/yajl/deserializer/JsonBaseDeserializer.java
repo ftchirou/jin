@@ -559,6 +559,8 @@ public class JsonBaseDeserializer {
 
                 if (json.propertyName() != null && !json.propertyName().trim().equals("")) {
                     fieldNames.put(json.propertyName(), field.getName());
+                } else {
+                    fieldNames.put(field.getName(), field.getName());
                 }
             }
         }
