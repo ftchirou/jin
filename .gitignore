@@ -6,3 +6,5 @@ out/
 *.iml
 *.ipr
 *.iws
+src/main/java/Main.java
+src/main/java/Person.java
