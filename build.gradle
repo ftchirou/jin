@@ -11,3 +11,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile group: 'joda-time', name: 'joda-time', version: '2.7'
 }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.3'
+}
