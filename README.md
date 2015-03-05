@@ -246,7 +246,7 @@ public class Main {
 }
 ```
 
-The constructor of the class ```CollectionType``` takes 2 arguments of type ```java.lang.reflect.Type```. The first is the type of the container (ArrayList, ArrayDeque, LinkedHashSet, ...) and the second is the type of each element.
+The constructor of the class ```CollectionType``` takes 2 arguments of type ```java.lang.reflect.Type```. The first is the concrete type of the collection (ArrayList, ArrayDeque, LinkedHashSet, ...) and the second is the type of each element.
 
 Now the fun part. ```CollectionType``` also implements ```java.lang.reflect.Type```. That means that we can have things like
 
@@ -268,6 +268,73 @@ public class Main {
         
         assertThat(list.get(0), instanceOf(LinkedHashSet.class));
         // => true
+    }
+}
+```
+
+###### JSON Object deserialization
+
+JSON objects are deserialized by default in ```LinkedHashMap<Object, Object>```.
+
+Example
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        Map map = Json.fromJson("{\"one\" : 1, \"two\" : 2, \"three\" : 3}");
+        
+        assertThat(map, instanceOf(LinkedHashMap.class);
+        // => true
+        
+        System.out.println(map);
+        // => {one=1, two=2, three=3}
+    }
+}
+```
+
+Like JSON arrays, it is possible to specify another map type by passing the type as the second argument to ```Json.fromJson(...)```.
+
+Example
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        Map map = Json.fromJson(Json.fromJson("{\"one\" : 1, \"two\" : 2, \"three\" : 3}", 
+            Hashtable.class));
+        
+        assertThat(map, instanceOf(Hashtable.class);
+        // => true
+        
+        System.out.println(map);
+        // => {two=2, one=1, three=3}
+    }
+}
+```
+
+You can specify the map type, the key and value types by using a ```MapType```. Just like ```CollectionType```, ```MapType``` implements ```java.lang.reflect.Type``` and takes 3 arguments: the concrete type of the map, the type of the keys and the type of the values.
+
+Example
+
+```java
+import jin.Json;
+import jin.type.MapType;
+import jin.type.CollectionType;
+
+public class Main {
+    public static void main(String[] args) {
+        Map map = Json.fromJson("{ \"a\" : [1, 9, 0, 8], \"b\" : [2, 3], \"c\" : [3, 4]}",
+            new MapType(HashMap.class, String.class,
+                new CollectionType(ArrayList.class, Integer.class)));
+                
+        assertThat(map, instanceOf(HashMap.class));
+        // => true
+        
+        System.out.println(map);
+        // => {b=[2, 3], c=[3, 4], a=[1, 9, 0, 8]}
     }
 }
 ```
