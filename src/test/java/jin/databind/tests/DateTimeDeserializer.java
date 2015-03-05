@@ -16,5 +16,4 @@ public class DateTimeDeserializer extends JsonDeserializer<DateTime> {
 
         return DateTime.parse(token.getValue());
     }
-
 }

@@ -133,8 +133,8 @@ public class JsonBaseSerializer extends JsonSerializer<Object> {
         if (field.isAnnotationPresent(Json.class)) {
             Json property = field.getAnnotation(Json.class);
 
-            if (property.propertyName() != null && !property.propertyName().trim().equals("")) {
-                fieldName = property.propertyName();
+            if (property.property() != null && !property.property().trim().equals("")) {
+                fieldName = property.property();
             }
 
             if (property.serializeWith() != null && property.serializeWith() != JsonSerializer.class) {

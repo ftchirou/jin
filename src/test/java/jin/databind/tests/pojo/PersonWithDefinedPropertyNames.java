@@ -7,16 +7,16 @@ import java.util.List;
 
 public class PersonWithDefinedPropertyNames {
 
-    @Json(propertyName="first_name")
+    @Json(property="first_name")
     private String firstName;
 
-    @Json(propertyName="last_name")
+    @Json(property="last_name")
     private String lastName;
 
-    @Json(propertyName="AGE")
+    @Json(property="AGE")
     private int age;
 
-    @Json(propertyName="FRIENDS")
+    @Json(property="FRIENDS")
     private List<String> friends;
 
     public PersonWithDefinedPropertyNames() {

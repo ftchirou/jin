@@ -9,6 +9,7 @@ import jin.tree.JsonDeserializer;
 import jin.tree.JsonNode;
 
 import java.io.*;
+import java.lang.reflect.Type;
 
 public class Json {
 
@@ -36,20 +37,20 @@ public class Json {
         return readTree(new JsonReader(reader));
     }
 
-    public static <T> T fromJson(String json, Class<T> cls) throws IOException, JsonProcessingException {
-        return fromJson(new StringReader(json), cls);
+    public static <T> T fromJson(String json, Type type) throws IOException, JsonProcessingException {
+        return fromJson(new StringReader(json), type);
     }
 
-    public static <T> T fromJson(File file, Class<T> cls) throws IOException, JsonProcessingException {
-        return fromJson(new FileInputStream(file), cls);
+    public static <T> T fromJson(File file, Type type) throws IOException, JsonProcessingException {
+        return fromJson(new FileInputStream(file), type);
     }
 
-    public static <T> T fromJson(InputStream is, Class<T> cls) throws IOException, JsonProcessingException {
-        return fromJson(new JsonReader(is), cls);
+    public static <T> T fromJson(InputStream is, Type type) throws IOException, JsonProcessingException {
+        return fromJson(new JsonReader(is), type);
     }
 
-    public static <T> T fromJson(Reader reader, Class<T> cls) throws IOException, JsonProcessingException {
-        return fromJson(new JsonReader(reader), cls);
+    public static <T> T fromJson(Reader reader, Type type) throws IOException, JsonProcessingException {
+        return fromJson(new JsonReader(reader), type);
     }
 
     public static void toJson(Object object, File file) throws IOException {
@@ -63,14 +64,14 @@ public class Json {
         return baos.toString("UTF-8");
     }
 
-    public static <T> T fromJson(JsonReader reader, Class<T> cls) throws IOException, JsonProcessingException {
+    public static <T> T fromJson(JsonReader reader, Type type) throws IOException, JsonProcessingException {
         JsonBaseDeserializer deserializer = new JsonBaseDeserializer();
 
         T object;
-        if (cls == null) {
+        if (type == null) {
             object = deserializer.deserialize(reader);
         } else {
-            object = deserializer.deserialize(reader, cls);
+            object = deserializer.deserialize(reader, type);
         }
 
         reader.close();

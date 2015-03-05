@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Json {
-    String propertyName() default "";
+    String property() default "";
     boolean ignore() default false;
     Class<? extends JsonSerializer> serializeWith() default JsonSerializer.class;
     Class<? extends JsonDeserializer> deserializeWith() default JsonDeserializer.class;
