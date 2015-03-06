@@ -71,18 +71,27 @@ public class JsonBaseDeserializer {
         Class<?> cls = getDeclaringClass(propertyName, classHierarchyMap);
 
         HashMap<String, String> map = classHierarchyMap.get(cls);
-        String fieldName = map.get(propertyName);
 
-        if (cls == null || fieldName == null) {
-            return;
-        }
+        if (map == null) {
+            reader.skip();
 
-        deserializeField(reader, cls.cast(object), cls, fieldName);
+        } else {
 
-        if (reader.accept(TokenType.OBJECT_END)) {
-            reader.expect(TokenType.OBJECT_END);
+            String fieldName = map.get(propertyName);
 
-            return;
+            if (cls == null || fieldName == null) {
+                reader.skip();
+
+            } else {
+
+                deserializeField(reader, cls.cast(object), cls, fieldName);
+
+                if (reader.accept(TokenType.OBJECT_END)) {
+                    reader.expect(TokenType.OBJECT_END);
+
+                    return;
+                }
+            }
         }
 
         reader.expect(TokenType.COMMA);

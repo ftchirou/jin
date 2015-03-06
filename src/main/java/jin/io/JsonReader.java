@@ -92,6 +92,16 @@ public class JsonReader implements Readable, Closeable {
         }
     }
 
+    public void skip(int n) throws IOException, JsonProcessingException {
+        for (int i = 0; i < n; ++i) {
+            skip();
+        }
+    }
+
+    public void skip() throws IOException, JsonProcessingException {
+        readToken();
+    }
+
     private JsonToken getNextToken() throws IOException, UnrecognizedTokenException {
         int c = read();
 
