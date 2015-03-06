@@ -483,3 +483,123 @@ public class Main {
 }
 ```
 
+###### Polymorphic object serialization / deserialization
+
+Suppose we have a class hierarchy like the following
+
+```java
+public abstract class Field {
+}
+```
+
+```java
+public class StringField extends Field {
+
+    private String value;
+    
+    public StringField() {
+    
+    }
+    
+    public StringField(String value) {
+        this.value = value;
+    }
+}
+```
+
+```java
+public class NumericField extends Field {
+
+    private int value;
+    
+    public NumericField() {
+    
+    }
+    
+    public NumericField(int value) {
+        this.value = value;
+    }
+}
+```
+
+```java
+public class BooleanField extends Field {
+
+    private boolean value;
+    
+    public BooleanField() {
+    
+    }
+    
+    public BooleanField(boolean value) {
+        this.value = value;
+    }
+}
+```
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class ArrayField extends Field {
+
+    private List<Field> fields;
+    
+    public ArrayField() {
+        this.fields = new ArrayList<Field>();
+    }
+    
+    public ArrayField(List<Field> fields) {
+        this.fields = fields;
+    }
+}
+```
+
+Now, suppose we want to serialize an ```ArrayField``` containing a ```StringField```, a ```NumericField``` and a ```BooleanField```.
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        ArrayField arrayField = new ArrayField(Arrays.asList(
+            new StringField("hello"),
+            new NumericField(42),
+            new BooleanField(true)
+        ));
+        
+        String json = Json.toJson(arrayField);
+        // => "{\"fields\":[{\"value\":\"hello\"},{\"value\":42},{\"value\":true}]}"
+    }
+}
+```
+
+So far, so good. Every field in ```arrayField``` has been correctly serialized. Now, suppose we want to deserialize back the string returned in an ```ArrayField```.
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        ArrayField arrayField = Json.fromJson(
+            "{\"fields\":[{\"value\":\"hello\"},{\"value\":42},{\"value\":true}]}",
+            ArrayField.class);
+            
+        // => JsonProcessingException: cannot instantiate object of type 'Field'.
+    }
+}
+```
+
+A ```JsonProcessingException``` is thrown with the message ```cannot instantiate object of type 'Field'.```. The problem occurs when Jin tries to deserialize the elements of ```List<Field> fields``` in ```ArrayField```. Indeed, ```Field``` is an abstract class and can not be instantiated, beside Jin has no way to know which of ```StringField```, ```NumericField``` or ```BooleanField``` correspond to each JSON Object in the JSON array.
+
+We need to give Jin, type information about which concrete type it should deserialize into depending on the JSON object it encounters.
+
+We can achieve this with the annotation ```@JsonTypeInfo```. Let's annotate our ```Field``` class like below
+
+```java
+@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS)
+public abstract class Field {
+}
+```
+
+
