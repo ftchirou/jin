@@ -18,7 +18,7 @@ The streaming API can also be used to write or read JSON tokens to/from a stream
     
 * Now, ```cd``` in the directory ```jin``` and type ```./gradlew build``` (or ```gradlew.bat build``` on Windows) to build the library. The jar file ```jin-1.0.jar``` will be generated in the directory ```build/libs/```.
 
-* If you want to run the tests, type ```./gradlew test``` (or ```gradlew.bat build``` on Windows) instead.
+* If you want to run the tests, type ```./gradlew test``` (or ```gradlew.bat test``` on Windows) instead.
 
 ## Usage
 
