@@ -6,7 +6,7 @@ Jin is a lightweight library for processing JSON in Java inspired by the [Jackso
 * **Databinding**. Serialization or deserialization of Java objects directly to or from a stream of JSON tokens. The stream can be a string, a file, a response from an HTTP request, basically any valid Java InputStream or OutputStream.
 * Building a mutable **in-memory tree representation** from a JSON tokens stream.
 
-The streaming API can also be used to write or read JSON tokens from a stream.
+The streaming API can also be used to write or read JSON tokens to/from a stream.
 
 ## Building the library
 
