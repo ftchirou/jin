@@ -1,21 +1,32 @@
-## Jin
-#### Simple and fast JSON processing.
+# Jin : Simple and fast JSON processing.
 
-### What Jin is ?
-Jin is a lightweight library for processing JSON in Java inspired by the [Jackson Project](https://github.com/FasterXML/jackson). It uses a streaming API for fast JSON processing and can be used in 2 modes
+## What Jin is ?
+Jin is a lightweight library for processing JSON in Java inspired by the [Jackson Project](https://github.com/FasterXML/jackson). It uses a streaming API for fast JSON processing and can be used for
 
-* **Databind** Serialize or deserialize Java objects directly to or from a stream of JSON tokens. The stream can be a string, a file, a response from an HTTP request, basically any valid Java InputStream or OutputStream.
-* **In-memory tree representation** Construct a mutable in-memory tree representation from a stream of JSON tokens.
+* **Databinding**. Serialization or deserialization of Java objects directly to or from a stream of JSON tokens. The stream can be a string, a file, a response from an HTTP request, basically any valid Java InputStream or OutputStream.
+* Building a mutable **in-memory tree representation** from a JSON tokens stream.
 
 The streaming API can also be used to write or read JSON tokens from a stream.
- 
-### Usage
 
-#### Databind
+## Building the library
 
-##### Basic Serialization
+* First clone the repository. In a terminal, type
 
-###### Primitives, Array, Collection and Map serialization
+    ```
+    git clone https://github.com/ftchirou/jin.git
+    ```
+    
+* Now, ```cd``` in the directory ```jin``` and type ```./gradlew build``` (or ```gradlew.bat build``` on Windows) to build the library. The jar file ```jin-1.0.jar``` will be generated in the directory ```build/libs/```.
+
+* If you want to run the tests, type ```./gradlew test``` (or ```gradlew.bat build``` on Windows) instead.
+
+## Usage
+
+### Databind
+
+#### Basic Serialization
+
+##### Primitives, Array, Collection and Map serialization
 Just pass the object or the primitive to be serialized to one of the static methods ```Json.toJson(...)```.
 ```java
 
@@ -63,7 +74,7 @@ public class Main {
 
 To write to a file use ```Json.toJson(Object, java.io.File)``` or use ```Json.toJson(Object, java.io.OutputStream)``` to write to any output stream
 
-###### POJO serialization
+##### POJO serialization
 To serialize a Plain Old Java Object, again, pass it to one of the static methods ```Json.toJson(...)```.
 
 ```java
@@ -164,9 +175,9 @@ You can control how the object members are translated in JSON with annotations.
  // => "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"gender\":\"XY\",\"age\":25}"
  ```
  
-##### Basic Deserialization
+#### Basic Deserialization
 
-###### Primitives deserialization
+##### Primitives deserialization
 
 Use one of the static methods ```Json.fromJson(...)```.
 
@@ -185,7 +196,7 @@ public class Main {
 }
 ````
 
-###### JSON Array deserialization
+##### JSON Array deserialization
 
 By default, JSON arrays are deserialized in ```ArrayList<Object>```.
 
@@ -275,7 +286,7 @@ public class Main {
 }
 ```
 
-###### JSON Object deserialization
+##### JSON Object deserialization
 
 JSON objects are deserialized by default in ```LinkedHashMap<Object, Object>```.
 
@@ -342,7 +353,7 @@ public class Main {
 }
 ```
 
-###### POJO deserialization
+##### POJO deserialization
 
 To deserialize a JSON object into a POJO:
 
@@ -399,9 +410,9 @@ public class Main {
 If the POJO was annotated with ```@Json``` and/or ```@JsonValue``` annotations, the deserialization process will take that into account.
 
 
-##### Advanced serialization and deserialization
+#### Advanced serialization and deserialization
 
-###### Custom serializers and deserializers
+##### Custom serializers and deserializers
 
 To override the behavior of the default serializer/deserializer for an object field:
 
@@ -483,7 +494,7 @@ public class Main {
 }
 ```
 
-###### Polymorphic object serialization / deserialization
+##### Polymorphic object serialization / deserialization
 
 Suppose we have a class hierarchy like the following
 
@@ -665,7 +676,7 @@ public class Main {
 }
 ```
 
-####### Type information customization
+###### Type information customization
 
 It is possible to customize the property which holds the type information in the JSON. We can customize its name and its value with the ```@JsonTypeInfo``` annotation.
 
@@ -787,8 +798,86 @@ public class Main {
 
 And the deserialization will just work as usual.
 
+### In-memory JSON tree
+
+```JsonNode``` is the abstract class which represents a JSON token in memory. Its concrete subclasses are
+
+* ```JsonObject``` for JSON objects.
+* ```JsonArray``` for JSON arrays.
+* ```JsonInt``` for integers.
+* ```JsonLong``` for longs.
+* ```JsonDecimal``` for decimal values.
+* ```JsonBigInt``` for large numbers.
+* ```JsonBoolean``` for boolean values.
+* ```JsonNull``` for ```null```.
+
+You can use the methods ```isObject()```, ```isArray()```, ```isString()```, ```isBoolean()```, ... on a ```JsonNode``` to know its concrete type and the methods ```stringValue()```, ```booleanValue()```, ```intValue()```, ```doubleValue()```, ... on a ```JsonNode``` to get the embedded Java value.
+
+To build a ```JsonNode``` from a stream of JSON tokens, use the static methods ```Json.readTree(...)```.
+
+Example
+
+```java
+import jin.tree.JsonNode
+
+public class Main {
+    public static void main(String[] args) {
+        JsonNode node = Json.readTree("{\"firstname\":\"John\",\"lastname\":\"Doe\",\"age\":25}");
+        
+        assertThat(node, instanceOf(JsonObject.class));
+        // => true
+        
+        JsonObject object = (JsonObject) node;
+        
+        bool isString = object.get("firstname").isString();
+        // => true
+        
+        String firstname = object.get("firstname").stringValue();
+        // => "John"
+        
+        bool isInt = object.get("age").isInt();
+        // => true
+        
+        int age = object.get("age").intValue();
+        // => 25
+    }
+}
+```
+
+You can also build a ```JsonNode``` manually by instantiating the classes ```Json...``` and calling their appropriate methods.
+
+Example
+
+```java
+import jin.tree.JsonObject;
+
+public class Main {
+    public static void main(String[] args) {
+    
+        JsonObject object = new JsonObject();
+        object.add("firstname", "John")
+              .add("lastname", "Doe")
+              .add("age", 25);
+              
+        System.out.println(object.toJsonString());
+        // => {"firstname":"John","lastname":"Doe","age":25}
+    }
+}
+```
 
 This is basically all one needs to know in order to use Jin. For further documentation, take a look
 
-* In the file ```src/main/java/jin/Json.java``` for all the to/from JSON conversion options.
+* in the file ```src/main/java/jin/Json.java``` for all the to/from JSON conversion options.
 * at the methods in the files ```src/main/java/jin/io/JsonReader.java``` and ```src/main/java/jin/io/JsonWriter.java``` to know how to use the streaming API directly.
+* in the package ```jin.tree``` for the different types of ```JsonNode``` and how to manipulate them.
+
+## Requirements
+
+* JDK 1.7 or later.
+
+## Contributions
+
+Filling an issue if you find a bug will be mucho appreciated. Pull-requests are welcome.
+
+## License
+This library is distributed under the MIT license found in the LICENSE.md file.
