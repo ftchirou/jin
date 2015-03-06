@@ -597,9 +597,198 @@ We need to give Jin, type information about which concrete type it should deseri
 We can achieve this with the annotation ```@JsonTypeInfo```. Let's annotate our ```Field``` class like below
 
 ```java
+import jin.annotations.JsonTypeInfo;
+
 @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS)
 public abstract class Field {
 }
 ```
+Now, let's execute our main method again
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        ArrayField arrayField = new ArrayField(Arrays.asList(
+            new StringField("hello"),
+            new NumericField(42),
+            new BooleanField(true)
+        ));
+        
+        String json = Json.toJson(arrayField);
+        // => "{\"@class\":\"ArrayField\",\"fields\":[{\"@class\":\"StringField\",\"value\":\"hello\"},{\"@class\":\"NumericField\",\"value\":42},{\"@class\":\"BooleanField\",\"value\":true}]}"
+
+    }
+}
+```
+
+At the beginning of each object, Jin has included a property ```@class``` which holds the full class name of the POJO serialized. During the deserialization, Jin will use the value of the ```@class``` property to know in which concrete class to deserialize each JSON object.
+
+Let's deserialize back.
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        ArrayField arrayField = Json.fromJson(
+            "{\"@class\":\"ArrayField\",\"fields\":[{\"@class\":\"StringField\",\"value\":\"hello\"},{\"@class\":\"NumericField\",\"value\":42},{\"@class\":\"BooleanField\",\"value\":true}]}",
+            ArrayField.class);
+            
+        assertThat(arrayField.getFields().get(0), instanceOf(StringField.class));
+        // => true
+        
+        assertThat(arrayField.getFields().get(1), instanceOf(NumericField.class));
+        // => true
+        
+        assertThat(arrayField.getFields().get(2), instanceOf(BooleanField.class));
+        // => true
+    }
+}
+```
+
+We could have declared ```arrayField``` with the abstract type ```Field``` and it would have worked; because of ```"@class" : "ArrayField"``` at the beginning of the JSON, Jin knows that it should deserialize the JSON object into an ```ArrayField```.
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        Field arrayField = Json.fromJson(
+            "{\"@class\":\"ArrayField\",\"fields\":[{\"@class\":\"StringField\",\"value\":\"hello\"},{\"@class\":\"NumericField\",\"value\":42},{\"@class\":\"BooleanField\",\"value\":true}]}",
+            Field.class);
+            
+        assertThat(arrayField, instanceOf(ArrayField.class);
+        // => true
+    }
+}
+```
+
+####### Type information customization
+
+It is possible to customize the property which holds the type information in the JSON. We can customize its name and its value with the ```@JsonTypeInfo``` annotation.
+
+Suppose, instead of ```@class``` and the full class name of the object, we want the property to be named ```type``` and its value to be ```string``` for a ```StringField```, ```numeric``` for ```NumericField```, ```boolean``` for a ```BooleanField``` and ```array``` for an ```ArrayField```.
+
+```java
+import jin.annotations.JsonType;
+import jin.annotations.JsonTypeInfo;
+import jin.annotations.JsonTypes;
+
+@JsonTypeInfo(use=JsonTypeInfo.Id.CUSTOM, property="type")
+@JsonTypes(
+    {
+        @JsonType(id="string", value=StringField.class),
+        @JsonType(id="numeric", value=NumericField.class),
+        @JsonType(id="boolean", value=BooleanField.class),
+        @JsonType(id="array", value=ArrayField.class)
+    }
+)
+public abstract class Field {
+    protected String type;
+}
+```
+
+The ```use``` property of ```@JsonTypeInfo``` is set to ```JsonTypeInfo.Id.CUSTOM``` to specify that we don't want the type info property to hold the full class name of the object and the type info property name is set to ```type```.
+
+The following annotation ```@JsonTypes``` specify for each possible value of the type info property, which concrete subclass of ```Field``` it corresponds to.
+
+We have added a member ```protected String type``` to ```Field```. Each subclass needs to set the value of this member accordingly.
+
+```java
+public class StringField extends Field {
+
+    private String value;
+
+    public StringField() {
+        this.type = "string";
+    }
+
+    public StringField(String value) {
+        this.type = "string";
+        this.value = value;
+    }
+}
+```
+
+```java
+public class NumericField extends Field {
+
+    private int value;
+
+    public NumericField() {
+        this.type = "numeric";
+    }
+
+    public NumericField(int value) {
+        this.type = "numeric";
+        this.value = value;
+    }
+}
+```
+
+```java
+public class BooleanField extends Field {
+
+    private boolean value;
+
+    public BooleanField() {
+        this.type = "boolean";
+
+    }
+
+    public BooleanField(boolean value) {
+        this.type = "boolean";
+        this.value = value;
+    }
+}
+```
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class ArrayField extends Field {
+
+    private List<Field> fields;
+
+    public ArrayField() {
+        this.type = "array";
+        this.fields = new ArrayList<Field>();
+    }
+
+    public ArrayField(List<Field> fields) {
+        this.type = "array";
+        this.fields = fields;
+    }
+}
+```
+
+If we serialize now, we will have
+
+```java
+import jin.Json;
+
+public class Main {
+    public static void main(String[] args) {
+        ArrayField arrayField = new ArrayField(Arrays.asList(
+            new StringField("hello"),
+            new NumericField(42),
+            new BooleanField(true)
+        ));
+        
+        String json = Json.toJson(arrayField);
+        // => "{\"type\":\"array\",\"fields\":[{\"type\":\"string\",\"value\":\"hello\"},{\"type\":\"numeric\",\"value\":42},{\"type\":\"boolean\",\"value\":true}]}"
+
+    }
+}
+```
+
+And the deserialization will just work as usual.
 
 
+This is basically all one needs to know in order to use Jin. For further documentation, take a look
+
+* In the file ```src/main/java/jin/Json.java``` for all the to/from JSON conversion options.
+* at the methods in the files ```src/main/java/jin/io/JsonReader.java``` and ```src/main/java/jin/io/JsonWriter.java``` to know how to use the streaming API directly.
